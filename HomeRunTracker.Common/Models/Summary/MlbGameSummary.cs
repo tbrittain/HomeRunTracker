@@ -6,13 +6,17 @@ namespace HomeRunTracker.Common.Models.Summary;
 public class MlbGameSummary
 {
     [JsonProperty("gamePk")]
-    public string Id { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
+    [Id(0)]
+    public int Id { get; set; }
+
+    [Id(1)]
     public string Link { get; set; } = string.Empty;
     
     [JsonProperty("status")]
+    [Id(2)]
     public MlbGameStatus GameStatus { get; set; } = new MlbGameStatus();
     
     [JsonProperty("content")]
+    [Id(3)]
     public MlbGameContent Content { get; set; } = new MlbGameContent();
 }

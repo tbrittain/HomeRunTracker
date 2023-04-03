@@ -1,11 +1,16 @@
 ﻿using HomeRunTracker.Common;
+using HomeRunTracker.Common.Models.Details;
+using HomeRunTracker.Common.Models.Summary;
 using Newtonsoft.Json;
 
 namespace HomeRunTracker.Backend.Grains;
 
 public class GameGrain : Grain, IGameGrain
 {
-    private Post _game = null!;
+    private int _gameId;
+    private MlbGameDetails _gameDetails = new();
+    private string _gameContentLink = string.Empty;
+    private HashSet<MlbPlay> _homeRuns = new();
     private IDisposable _timer = null!;
     private readonly HttpClient _httpClient;
     private readonly ILogger<GameGrain> _logger;
@@ -16,50 +21,82 @@ public class GameGrain : Grain, IGameGrain
         _logger = logger;
     }
 
-    public async Task InitializeAsync(Post game)
+    public async Task InitializeAsync(MlbGameSummary game)
     {
-        _game = game;
+        _gameId = game.Id;
+        _gameContentLink = game.Content.Link;
 
         _logger.LogInformation("Initializing game grain {GameId}", game.Id.ToString());
         _timer = RegisterTimer(async _ =>
         {
-            _logger.LogDebug("Polling game {GameId}", _game.Id.ToString());
-            
-            var updatedGame = await FetchGameDataAsync(_game);
+            _logger.LogDebug("Polling game {GameId}", game.Id.ToString());
 
-            if (updatedGame.Id > 4)
+            var gameDetails = await FetchGameDataAsync();
+
+            if (gameDetails.GameData.Status.Status is EMlbGameStatus.PreGame)
             {
-                _logger.LogInformation("Game {GameId} is over", _game.Id.ToString());
+                _logger.LogInformation("Game {GameId} is in pre-game", _gameId.ToString());
+                await Task.Delay(TimeSpan.FromMinutes(15));
+                return;
+            }
+
+            if (gameDetails.GameData.Status.Status is EMlbGameStatus.Warmup)
+            {
+                _logger.LogInformation("Game {GameId} is warming up", _gameId.ToString());
+                await Task.Delay(TimeSpan.FromMinutes(5));
+                return;
+            }
+
+            var homeRuns = gameDetails.LiveData.Plays.AllPlays
+                .Where(p => p.Result.Result is EPlayResult.HomeRun)
+                .ToList();
+
+            if (gameDetails.GameData.Status.Status is not EMlbGameStatus.InProgress)
+            {
+                _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());
                 await StopAsync();
+                return;
             }
-            else
-            {
-                _game = updatedGame;
-            }
-        }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+
+            _gameDetails = gameDetails;
+        }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
         await base.OnActivateAsync(default);
     }
 
-    public async Task<Post> GetGameAsync()
+    public async Task<MlbGameDetails> GetGameAsync()
     {
-        return await Task.FromResult(_game);
+        return await Task.FromResult(_gameDetails);
     }
 
     public async Task StopAsync()
     {
-        _logger.LogInformation("Stopping game grain {GameId}", _game.Id.ToString());
+        _logger.LogInformation("Stopping game grain {GameId}", _gameId.ToString());
         DeactivateOnIdle();
         await Task.CompletedTask;
     }
 
-    private async Task<Post> FetchGameDataAsync(Post game)
+    private async Task<MlbGameDetails> FetchGameDataAsync()
     {
-        _logger.LogDebug("Fetching game data for game {GameId}", game.Id.ToString());
-        
-        var response = await _httpClient.GetAsync($"https://jsonplaceholder.typicode.com/posts/{game.Id}");
+        _logger.LogDebug("Fetching game data for game {GameId}", _gameId.ToString());
+        var url = $"https://statsapi.mlb.com/api/v1.1/game/{_gameId}/feed/live";
+
+        var response = await _httpClient.GetAsync(url);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to fetch game data for game {GameId}", _gameId.ToString());
+            throw new Exception($"Failed to fetch game data for game {_gameId}");
+        }
+
         var content = await response.Content.ReadAsStringAsync();
-        var updatedGame = JsonConvert.DeserializeObject<Post>(content);
+        var updatedGame = JsonConvert.DeserializeObject<MlbGameDetails>(content);
+
+        if (updatedGame is null)
+        {
+            _logger.LogError("Failed to deserialize game data for game {GameId}", _gameId.ToString());
+            throw new Exception($"Failed to deserialize game data for game {_gameId}");
+        }
+
         return updatedGame;
     }
 }

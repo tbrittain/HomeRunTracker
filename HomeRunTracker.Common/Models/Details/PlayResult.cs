@@ -2,15 +2,19 @@
 
 namespace HomeRunTracker.Common.Models.Details;
 
+[GenerateSerializer]
 public class PlayResult
 {
-    [JsonProperty("eventType")] 
+    [JsonProperty("eventType")]
+    [Id(0)]
     public string EventType { get; set; } = string.Empty;
     
     [JsonProperty("description")]
+    [Id(1)]
     public string Description { get; set; } = string.Empty;
     
     [JsonProperty("rbi")]
+    [Id(2)]
     public int Rbi { get; set; }
 
     public EPlayResult Result => EventType switch

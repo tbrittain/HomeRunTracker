@@ -2,24 +2,20 @@
 
 namespace HomeRunTracker.Common.Models.Summary;
 
+[GenerateSerializer]
 public class MlbGameStatus
 {
     [JsonProperty("detailedState")]
+    [Id(0)]
     public string State { get; set; } = string.Empty;
 
     public EMlbGameStatus Status =>
         State switch
         {
+            "Pre-Game" => EMlbGameStatus.PreGame,
+            "Warmup" => EMlbGameStatus.Warmup,
             "Final" => EMlbGameStatus.Final,
             "In Progress" => EMlbGameStatus.InProgress,
-            _ => throw new ArgumentOutOfRangeException()
+            _ => EMlbGameStatus.Unknown
         };
-}
-
-public enum EMlbGameStatus
-{
-    Final,
-    InProgress,
-    // likely more, but this is all we need for now
-    // will need to handle Postponed
 }

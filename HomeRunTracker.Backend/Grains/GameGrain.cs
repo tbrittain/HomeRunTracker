@@ -51,6 +51,12 @@ public class GameGrain : Grain, IGameGrain
                 .Where(p => p.Result.Result is EPlayResult.HomeRun)
                 .ToList();
 
+            foreach (var homeRun in homeRuns.Where(homeRun => !_homeRuns.Contains(homeRun)))
+            {
+                _logger.LogInformation("Game {GameId} has a new home run", _gameId.ToString());
+                _homeRuns.Add(homeRun);
+            }
+
             if (gameDetails.GameData.Status.Status is not EMlbGameStatus.InProgress)
             {
                 _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());

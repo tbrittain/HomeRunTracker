@@ -1,7 +1,7 @@
 ﻿namespace HomeRunTracker.Common.Models.Details;
 
 [GenerateSerializer]
-public class Pitcher
+public record Pitcher
 {
     [Id(0)]
     public int Id { get; set; }

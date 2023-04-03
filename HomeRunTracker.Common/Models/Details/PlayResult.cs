@@ -3,7 +3,7 @@
 namespace HomeRunTracker.Common.Models.Details;
 
 [GenerateSerializer]
-public class PlayResult
+public record PlayResult
 {
     [JsonProperty("eventType")]
     [Id(0)]

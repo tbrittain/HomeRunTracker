@@ -1,7 +1,7 @@
 ﻿namespace HomeRunTracker.Common.Models.Details;
 
 [GenerateSerializer]
-public class PlayEvent
+public record PlayEvent
 {
     [Id(0)]
     public Guid PlayId { get; set; }

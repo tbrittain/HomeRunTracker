@@ -18,7 +18,7 @@ public class MlbApiPollingService : BackgroundService
         _grainFactory = grainFactory;
         _logger = logger;
 
-        _pollingInterval = TimeSpan.FromDays(1);
+        _pollingInterval = TimeSpan.FromHours(4);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

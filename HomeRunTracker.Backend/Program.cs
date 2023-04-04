@@ -1,5 +1,10 @@
 using System.Net;
+using System.Reflection;
+using HomeRunTracker.Backend.Grains;
+using HomeRunTracker.Backend.Handlers;
 using HomeRunTracker.Backend.Services;
+using HomeRunTracker.Common.Models.Notifications;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,12 +28,21 @@ builder.WebHost.UseKestrel((ctx, kestrelOptions) =>
 });
 
 builder.Services.AddHttpClient();
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+builder.Services.AddScoped<INotificationHandler<GameStoppedNotification>, GameRemovedHandler>();
 builder.Services.AddHostedService<MlbApiPollingService>();
 
 // will re-enable SignalR after a proof of concept
 // builder.Services.AddSignalR().AddJsonProtocol();
 
 var app = builder.Build();
+
+app.MapGet("/home-runs", async (IClusterClient client) =>
+{
+    var grain = client.GetGrain<IGameListGrain>(0);
+    var homeRuns = await grain.GetHomeRunsAsync();
+    return Results.Ok(homeRuns);
+});
 
 if (app.Environment.IsDevelopment())
 {

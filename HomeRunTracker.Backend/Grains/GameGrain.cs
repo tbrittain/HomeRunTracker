@@ -1,5 +1,7 @@
 ﻿using HomeRunTracker.Common.Models.Details;
+using HomeRunTracker.Common.Models.Notifications;
 using HomeRunTracker.Common.Models.Summary;
+using MediatR;
 using Newtonsoft.Json;
 
 namespace HomeRunTracker.Backend.Grains;
@@ -12,11 +14,13 @@ public class GameGrain : Grain, IGameGrain
     private readonly HashSet<MlbPlay> _homeRuns = new();
     private readonly HttpClient _httpClient;
     private readonly ILogger<GameGrain> _logger;
+    private readonly IMediator _mediator; 
 
-    public GameGrain(HttpClient httpClient, ILogger<GameGrain> logger)
+    public GameGrain(HttpClient httpClient, ILogger<GameGrain> logger, IMediator mediator)
     {
         _httpClient = httpClient;
         _logger = logger;
+        _mediator = mediator;
     }
 
     public async Task<int> InitializeAsync(MlbGameSummary game)
@@ -78,8 +82,7 @@ public class GameGrain : Grain, IGameGrain
     {
         _logger.LogInformation("Stopping game grain {GameId}", _gameId.ToString());
         DeactivateOnIdle();
-        OnGameStopped?.Invoke(this, new GameStoppedEventArgs(_gameId));
-        await Task.CompletedTask;
+        await _mediator.Publish(new GameStoppedNotification(_gameId));
     }
 
     private async Task<MlbGameDetails> FetchGameDataAsync()
@@ -104,17 +107,5 @@ public class GameGrain : Grain, IGameGrain
         }
 
         return updatedGame;
-    }
-
-    public event EventHandler<GameStoppedEventArgs> OnGameStopped;
-
-    public class GameStoppedEventArgs : EventArgs
-    {
-        public GameStoppedEventArgs(int gameId)
-        {
-            GameId = gameId;
-        }
-
-        public int GameId { get; }
     }
 }

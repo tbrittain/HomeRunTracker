@@ -8,5 +8,4 @@ public interface IGameGrain : IGrainWithIntegerKey
     Task<int> InitializeAsync(MlbGameSummary gameId);
     Task<MlbGameDetails> GetGameAsync();
     Task StopAsync();
-    event EventHandler<GameGrain.GameStoppedEventArgs> OnGameStopped;
 }

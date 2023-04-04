@@ -85,15 +85,14 @@ public class MlbApiPollingService : BackgroundService
         {
             var gameGrain = _grainFactory.GetGrain<IGameGrain>(game.Id);
             tasks.Add(gameGrain.InitializeAsync(game));
-            gameGrain.OnGameStopped += OnGameStopped;
         }
 
         await Task.WhenAll(tasks);
         return tasks.Select(t => t.Result).ToList();
     }
 
-    private void OnGameStopped(object? sender, GameGrain.GameStoppedEventArgs e)
+    public void RemoveGame(int gameId)
     {
-        TrackedGameIds.Remove(e.GameId);
+        TrackedGameIds.Remove(gameId);
     }
 }

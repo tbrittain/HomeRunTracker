@@ -1,5 +1,4 @@
-﻿using HomeRunTracker.Common;
-using HomeRunTracker.Common.Models.Details;
+﻿using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Summary;
 using Newtonsoft.Json;
 
@@ -10,8 +9,7 @@ public class GameGrain : Grain, IGameGrain
     private int _gameId;
     private MlbGameDetails _gameDetails = new();
     private string _gameContentLink = string.Empty;
-    private HashSet<MlbPlay> _homeRuns = new();
-    private IDisposable _timer = null!;
+    private readonly HashSet<MlbPlay> _homeRuns = new();
     private readonly HttpClient _httpClient;
     private readonly ILogger<GameGrain> _logger;
 
@@ -21,13 +19,13 @@ public class GameGrain : Grain, IGameGrain
         _logger = logger;
     }
 
-    public async Task InitializeAsync(MlbGameSummary game)
+    public async Task<int> InitializeAsync(MlbGameSummary game)
     {
         _gameId = game.Id;
         _gameContentLink = game.Content.Link;
 
         _logger.LogInformation("Initializing game grain {GameId}", game.Id.ToString());
-        _timer = RegisterTimer(async _ =>
+        RegisterTimer(async _ =>
         {
             _logger.LogDebug("Polling game {GameId}", game.Id.ToString());
 
@@ -68,6 +66,7 @@ public class GameGrain : Grain, IGameGrain
         }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
         await base.OnActivateAsync(default);
+        return _gameId;
     }
 
     public async Task<MlbGameDetails> GetGameAsync()
@@ -79,6 +78,7 @@ public class GameGrain : Grain, IGameGrain
     {
         _logger.LogInformation("Stopping game grain {GameId}", _gameId.ToString());
         DeactivateOnIdle();
+        OnGameStopped?.Invoke(this, new GameStoppedEventArgs(_gameId));
         await Task.CompletedTask;
     }
 
@@ -104,5 +104,17 @@ public class GameGrain : Grain, IGameGrain
         }
 
         return updatedGame;
+    }
+
+    public event EventHandler<GameStoppedEventArgs> OnGameStopped;
+
+    public class GameStoppedEventArgs : EventArgs
+    {
+        public GameStoppedEventArgs(int gameId)
+        {
+            GameId = gameId;
+        }
+
+        public int GameId { get; }
     }
 }

@@ -5,7 +5,8 @@ namespace HomeRunTracker.Backend.Grains;
 
 public interface IGameGrain : IGrainWithIntegerKey
 {
-    Task InitializeAsync(MlbGameSummary gameId);
+    Task<int> InitializeAsync(MlbGameSummary gameId);
     Task<MlbGameDetails> GetGameAsync();
     Task StopAsync();
+    event EventHandler<GameGrain.GameStoppedEventArgs> OnGameStopped;
 }

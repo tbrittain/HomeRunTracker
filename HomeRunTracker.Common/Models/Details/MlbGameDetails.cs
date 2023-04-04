@@ -10,9 +10,9 @@ public class MlbGameDetails
     public int Id { get; set; }
 
     [Id(1)]
-    public MlbGameLiveData LiveData { get; set; } = new MlbGameLiveData();
+    public MlbGameLiveData LiveData { get; set; } = new();
     
     [JsonProperty("gameData")]
     [Id(2)]
-    public GameData GameData { get; set; } = new GameData();
+    public GameData GameData { get; set; } = new();
 }

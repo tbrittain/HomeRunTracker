@@ -14,9 +14,9 @@ public class MlbGameSummary
     
     [JsonProperty("status")]
     [Id(2)]
-    public MlbGameStatus GameStatus { get; set; } = new MlbGameStatus();
+    public MlbGameStatus GameStatus { get; set; } = new();
     
     [JsonProperty("content")]
     [Id(3)]
-    public MlbGameContent Content { get; set; } = new MlbGameContent();
+    public MlbGameContent Content { get; set; } = new();
 }

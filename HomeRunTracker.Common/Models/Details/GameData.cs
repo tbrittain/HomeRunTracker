@@ -6,5 +6,5 @@ namespace HomeRunTracker.Common.Models.Details;
 public class GameData
 {
     [Id(0)]
-    public MlbGameStatus Status { get; set; } = new MlbGameStatus();
+    public MlbGameStatus Status { get; set; } = new();
 }

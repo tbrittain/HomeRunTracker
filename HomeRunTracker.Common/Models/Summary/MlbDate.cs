@@ -10,5 +10,5 @@ public class MlbDate
     
     [JsonProperty("games")]
     [Id(1)]
-    public List<MlbGameSummary> Games { get; set; } = new List<MlbGameSummary>();
+    public List<MlbGameSummary> Games { get; set; } = new();
 }

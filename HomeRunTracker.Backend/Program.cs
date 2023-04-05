@@ -30,6 +30,7 @@ builder.WebHost.UseKestrel((ctx, kestrelOptions) =>
 builder.Services.AddHttpClient();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 builder.Services.AddScoped<INotificationHandler<GameStoppedNotification>, GameRemovedHandler>();
+builder.Services.AddScoped<INotificationHandler<HomeRunNotification>, HomeRunHandler>();
 builder.Services.AddSingleton<MlbApiPollingService>();
 builder.Services.AddHostedService<MlbApiPollingService>(p => p.GetRequiredService<MlbApiPollingService>());
 

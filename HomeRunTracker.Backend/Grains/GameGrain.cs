@@ -1,4 +1,6 @@
-﻿using HomeRunTracker.Common.Models.Details;
+﻿using System.Diagnostics;
+using HomeRunTracker.Common.Models.Details;
+using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
 using HomeRunTracker.Common.Models.Summary;
 using MediatR;
@@ -14,7 +16,8 @@ public class GameGrain : Grain, IGameGrain
     private readonly HashSet<MlbPlay> _homeRuns = new();
     private readonly HttpClient _httpClient;
     private readonly ILogger<GameGrain> _logger;
-    private readonly IMediator _mediator; 
+    private readonly IMediator _mediator;
+    private bool _isInitialLoad = true;
 
     public GameGrain(HttpClient httpClient, ILogger<GameGrain> logger, IMediator mediator)
     {
@@ -53,10 +56,35 @@ public class GameGrain : Grain, IGameGrain
                 .Where(p => p.Result.Result is EPlayResult.HomeRun)
                 .ToList();
 
-            foreach (var homeRun in homeRuns.Where(homeRun => !_homeRuns.Contains(homeRun)))
+            foreach (var play in homeRuns.Where(homeRun => !_homeRuns.Contains(homeRun)))
             {
                 _logger.LogInformation("Game {GameId} has a new home run", _gameId.ToString());
-                _homeRuns.Add(homeRun);
+                _homeRuns.Add(play);
+
+                if (_isInitialLoad) continue;
+
+                _logger.LogInformation("Publishing home run notification for game {GameId}", _gameId.ToString());
+                var homeRunEvent = play.Events.Single(e => e.HitData is not null).HitData;
+                Debug.Assert(homeRunEvent != null, nameof(homeRunEvent) + " != null");
+                var homeRunRecord = new HomeRunRecord
+                {
+                    Id = Guid.NewGuid(),
+                    GameId = _gameId,
+                    DateTime = play.DateTime,
+                    BatterId = play.PlayerMatchup.Batter.Id,
+                    BatterName = play.PlayerMatchup.Batter.FullName,
+                    Description = play.Result.Description,
+                    Rbi = play.Result.Rbi,
+                    LaunchSpeed = homeRunEvent.LaunchSpeed,
+                    LaunchAngle = homeRunEvent.LaunchAngle,
+                    TotalDistance = homeRunEvent.TotalDistance,
+                    Inning = play.About.Inning,
+                    IsTopInning = play.About.IsTopInning,
+                    PitcherId = play.PlayerMatchup.Pitcher.Id,
+                    PitcherName = play.PlayerMatchup.Pitcher.FullName,
+                };
+                
+                await _mediator.Publish(new HomeRunNotification(_gameId, homeRunRecord));
             }
 
             if (gameDetails.GameData.Status.Status is not EMlbGameStatus.InProgress)
@@ -67,6 +95,7 @@ public class GameGrain : Grain, IGameGrain
             }
 
             _gameDetails = gameDetails;
+            _isInitialLoad = false;
         }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
         await base.OnActivateAsync(default);

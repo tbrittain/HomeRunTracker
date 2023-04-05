@@ -30,17 +30,20 @@ builder.WebHost.UseKestrel((ctx, kestrelOptions) =>
 builder.Services.AddHttpClient();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 builder.Services.AddScoped<INotificationHandler<GameStoppedNotification>, GameRemovedHandler>();
-builder.Services.AddHostedService<MlbApiPollingService>();
+builder.Services.AddSingleton<MlbApiPollingService>();
+builder.Services.AddHostedService<MlbApiPollingService>(p => p.GetRequiredService<MlbApiPollingService>());
 
 // will re-enable SignalR after a proof of concept
 // builder.Services.AddSignalR().AddJsonProtocol();
 
 var app = builder.Build();
 
-app.MapGet("/home-runs", async (IClusterClient client) =>
+app.MapGet("home-runs", async (IClusterClient client) =>
 {
     var grain = client.GetGrain<IGameListGrain>(0);
-    var homeRuns = await grain.GetHomeRunsAsync();
+    var homeRuns = (await grain.GetHomeRunsAsync())
+        .OrderByDescending(hr => hr.TotalDistance)
+        .ToList();
     return Results.Ok(homeRuns);
 });
 

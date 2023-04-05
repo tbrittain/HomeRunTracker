@@ -15,8 +15,7 @@ public class GameRemovedHandler : INotificationHandler<GameStoppedNotification>
 
     public Task Handle(GameStoppedNotification notification, CancellationToken cancellationToken)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var pollingService = scope.ServiceProvider.GetService<MlbApiPollingService>();
+        var pollingService = _serviceProvider.GetService<MlbApiPollingService>();
         if (pollingService is null)
             throw new InvalidOperationException("MlbApiPollingService not found");
         

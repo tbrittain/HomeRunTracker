@@ -39,23 +39,27 @@ public class GameListGrain : Grain, IGameListGrain
             _logger.LogInformation("Getting home runs for game {GameId}", game.Id.ToString());
             var homeRuns = game.LiveData.Plays.AllPlays
                 .Where(p => p.Result.Result is EPlayResult.HomeRun)
-                .Select(hr =>
+                .Select(play =>
                 {
-                    var homeRunEvent = hr.Events.Single(e => e.HitData is not null).HitData;
+                    var homeRunEvent = play.Events.Single(e => e.HitData is not null).HitData;
                     Debug.Assert(homeRunEvent != null, nameof(homeRunEvent) + " != null");
                     
                     return new HomeRunRecord
                     {
                         Id = Guid.NewGuid(),
                         GameId = game.Id,
-                        DateTime = hr.DateTime,
-                        BatterId = hr.Matchup.Batter.Id,
-                        BatterName = hr.Matchup.Batter.FullName,
-                        Description = hr.Result.Description,
-                        Rbi = hr.Result.Rbi,
+                        DateTime = play.DateTime,
+                        BatterId = play.PlayerMatchup.Batter.Id,
+                        BatterName = play.PlayerMatchup.Batter.FullName,
+                        Description = play.Result.Description,
+                        Rbi = play.Result.Rbi,
                         LaunchSpeed = homeRunEvent.LaunchSpeed,
                         LaunchAngle = homeRunEvent.LaunchAngle,
                         TotalDistance = homeRunEvent.TotalDistance,
+                        Inning = play.About.Inning,
+                        IsTopInning = play.About.IsTopInning,
+                        PitcherId = play.PlayerMatchup.Pitcher.Id,
+                        PitcherName = play.PlayerMatchup.Pitcher.FullName,
                     };
                 })
                 .ToList();

@@ -15,11 +15,25 @@ public record MlbPlay
     
     [JsonProperty("matchup")]
     [Id(2)]
-    public Matchup Matchup { get; set; } = new();
+    public PlayerMatchup PlayerMatchup { get; set; } = new();
     
     [JsonProperty("playEndTime")]
     [Id(3)]
     public string PlayEndTime { get; set; } = string.Empty;
     
     public DateTime DateTime => DateTime.Parse(PlayEndTime);
+    
+    [JsonProperty("about")]
+    [Id(4)]
+    public MlbPlayAbout About { get; set; } = new();
+}
+
+[GenerateSerializer]
+public class MlbPlayAbout
+{
+    [Id(0)]
+    public int Inning { get; set; }
+
+    [Id(1)]
+    public bool IsTopInning { get; set; }
 }

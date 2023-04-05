@@ -1,7 +1,7 @@
 ﻿namespace HomeRunTracker.Common.Models.Details;
 
 [GenerateSerializer]
-public record Matchup
+public record PlayerMatchup
 {
     [Id(0)]
     public Batter Batter { get; set; } = new();

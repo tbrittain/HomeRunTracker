@@ -2,6 +2,9 @@
 using HomeRunTracker.Backend.Services;
 using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
+using HomeRunTracker.Common.Models.Notifications;
+using Orleans.Runtime;
+using Orleans.Streams;
 
 namespace HomeRunTracker.Backend.Grains;
 
@@ -10,12 +13,23 @@ public class GameListGrain : Grain, IGameListGrain
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<GameListGrain> _logger;
     private readonly IServiceProvider _serviceProvider;
+    private IAsyncStream<HomeRunNotification> _homeRunStream = null!;
 
     public GameListGrain(IClusterClient clusterClient, ILogger<GameListGrain> logger, IServiceProvider serviceProvider)
     {
         _clusterClient = clusterClient;
         _logger = logger;
         _serviceProvider = serviceProvider;
+    }
+
+    public override Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        var streamProvider = this.GetStreamProvider("HomeRuns");
+        var streamId = StreamId.Create("HomeRuns", this.GetPrimaryKeyString());
+        
+        _homeRunStream = streamProvider.GetStream<HomeRunNotification>(streamId);
+        
+        return base.OnActivateAsync(cancellationToken);
     }
 
     public async Task<List<HomeRunRecord>> GetHomeRunsAsync()
@@ -69,5 +83,11 @@ public class GameListGrain : Grain, IGameListGrain
 
         _logger.LogInformation("Returning {HomeRunCount} home runs", allHomeRuns.Count.ToString());
         return allHomeRuns;
+    }
+
+    public Task PublishHomeRunAsync(HomeRunNotification notification)
+    {
+        _logger.LogInformation("Publishing home run for game {GameId}", notification.GameId.ToString());
+        return _homeRunStream.OnNextAsync(notification);
     }
 }

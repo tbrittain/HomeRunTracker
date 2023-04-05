@@ -1,20 +1,21 @@
-﻿using HomeRunTracker.Common.Models.Notifications;
+﻿using HomeRunTracker.Backend.Grains;
+using HomeRunTracker.Common.Models.Notifications;
 using MediatR;
 
 namespace HomeRunTracker.Backend.Handlers;
 
 public class HomeRunHandler : INotificationHandler<HomeRunNotification>
 {
-    private readonly IServiceProvider _serviceProvider;
-    
-    public HomeRunHandler(IServiceProvider serviceProvider)
+    private readonly IClusterClient _clusterClient;
+
+    public HomeRunHandler(IClusterClient clusterClient)
     {
-        _serviceProvider = serviceProvider;
+        _clusterClient = clusterClient;
     }
 
     public async Task Handle(HomeRunNotification notification, CancellationToken cancellationToken)
     {
-        // TODO: this
-        await Task.Delay(10, cancellationToken);
+        var gameListGrain = _clusterClient.GetGrain<IGameListGrain>(0);
+        await gameListGrain.PublishHomeRunAsync(notification);
     }
 }

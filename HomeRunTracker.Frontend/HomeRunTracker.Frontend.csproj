@@ -18,4 +18,8 @@
       <PackageReference Include="Microsoft.Orleans.Streaming" Version="7.1.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\HomeRunTracker.Common\HomeRunTracker.Common.csproj" />
+    </ItemGroup>
+
 </Project>

@@ -1,11 +1,19 @@
-using HomeRunTracker.Frontend.Data;
+using HomeRunTracker.Frontend.Services.HttpService;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.AddOrleansClient(clientBuilder =>
+{
+    clientBuilder.UseLocalhostClustering()
+        .AddMemoryStreams("HomeRuns");
+});
+builder.Services.AddSignalR();
+builder.Services.AddHttpClient();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddSingleton<IHttpService, HttpService>();
+
+// https://github.com/dotnet/samples/blob/main/orleans/ChatRoom/ChatRoom.Client/StreamObserver.cs
 
 var app = builder.Build();
 

@@ -18,6 +18,7 @@ public class GameGrain : Grain, IGameGrain
     private readonly ILogger<GameGrain> _logger;
     private readonly IMediator _mediator;
     private bool _isInitialLoad = true;
+    private List<string> _homeRunHashes = new();
 
     public GameGrain(HttpClient httpClient, ILogger<GameGrain> logger, IMediator mediator)
     {
@@ -58,17 +59,29 @@ public class GameGrain : Grain, IGameGrain
 
             foreach (var play in homeRuns.Where(homeRun => !_homeRuns.Contains(homeRun)))
             {
-                _logger.LogInformation("Game {GameId} has a new home run", _gameId.ToString());
-                _homeRuns.Add(play);
+                var descriptionHashString = HomeRunRecord.GetHash(play.Result.Description, _gameId);
+                if (_isInitialLoad)
+                {
+                    _homeRunHashes.Add(descriptionHashString);
+                    continue;
+                }
 
-                if (_isInitialLoad) continue;
-
-                _logger.LogInformation("Publishing home run notification for game {GameId}", _gameId.ToString());
                 var homeRunEvent = play.Events.Single(e => e.HitData is not null).HitData;
                 Debug.Assert(homeRunEvent != null, nameof(homeRunEvent) + " != null");
+
+                if (_homeRunHashes.Contains(descriptionHashString))
+                {
+                    _logger.LogDebug("Home run {Hash} has already been published", descriptionHashString);
+                    continue;
+                }
+
+                _logger.LogInformation("Game {GameId} has a new home run with hash {Hash}", _gameId.ToString(),
+                    descriptionHashString);
+                _homeRuns.Add(play);
+
                 var homeRunRecord = new HomeRunRecord
                 {
-                    Id = Guid.NewGuid(),
+                    Hash = descriptionHashString,
                     GameId = _gameId,
                     DateTime = play.DateTime,
                     BatterId = play.PlayerMatchup.Batter.Id,
@@ -83,8 +96,9 @@ public class GameGrain : Grain, IGameGrain
                     PitcherId = play.PlayerMatchup.Pitcher.Id,
                     PitcherName = play.PlayerMatchup.Pitcher.FullName,
                 };
-                
+
                 await _mediator.Publish(new HomeRunNotification(_gameId, homeRunRecord));
+                _homeRunHashes.Add(descriptionHashString);
             }
 
             if (gameDetails.GameData.Status.Status is not EMlbGameStatus.InProgress)

@@ -2,6 +2,7 @@ using System.Net;
 using System.Reflection;
 using HomeRunTracker.Backend.Grains;
 using HomeRunTracker.Backend.Handlers;
+using HomeRunTracker.Backend.Hubs;
 using HomeRunTracker.Backend.Services;
 using HomeRunTracker.Common.Models.Notifications;
 using MediatR;
@@ -12,12 +13,13 @@ builder.Host.UseOrleans((ctx, siloBuilder) => {
     // In order to support multiple hosts forming a cluster, they must listen on different ports.
     // Use the --InstanceId X option to launch subsequent hosts.
     var instanceId = ctx.Configuration.GetValue<int>("InstanceId");
-    siloBuilder.UseLocalhostClustering(
-        siloPort: 11111 + instanceId,
-        gatewayPort: 30000 + instanceId,
-        primarySiloEndpoint: new IPEndPoint(IPAddress.Loopback, 11111));
-
-    siloBuilder.AddActivityPropagation();
+    siloBuilder
+        .UseLocalhostClustering(
+            siloPort: 11111 + instanceId,
+            gatewayPort: 30000 + instanceId,
+            primarySiloEndpoint: new IPEndPoint(IPAddress.Loopback, 11111))
+        .AddActivityPropagation()
+        .AddMemoryGrainStorage("PubSubStore");
 });
 
 builder.WebHost.UseKestrel((ctx, kestrelOptions) =>
@@ -28,17 +30,16 @@ builder.WebHost.UseKestrel((ctx, kestrelOptions) =>
 });
 
 builder.Services.AddHttpClient();
+builder.Services.AddSignalR();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 builder.Services.AddScoped<INotificationHandler<GameStoppedNotification>, GameRemovedHandler>();
 builder.Services.AddScoped<INotificationHandler<HomeRunNotification>, HomeRunHandler>();
 builder.Services.AddSingleton<MlbApiPollingService>();
 builder.Services.AddHostedService<MlbApiPollingService>(p => p.GetRequiredService<MlbApiPollingService>());
 
-// will re-enable SignalR after a proof of concept
-// builder.Services.AddSignalR().AddJsonProtocol();
-
 var app = builder.Build();
 
+app.MapHub<HomeRunHub>("home-run-hub");
 app.MapGet("home-runs", async (IClusterClient client) =>
 {
     var grain = client.GetGrain<IGameListGrain>(0);

@@ -1,10 +1,13 @@
-﻿namespace HomeRunTracker.Common.Models.Internal;
+﻿using System.Security.Cryptography;
+using System.Text;
+
+namespace HomeRunTracker.Common.Models.Internal;
 
 [GenerateSerializer]
 public record HomeRunRecord
 {
     [Id(0)]
-    public Guid Id { get; set; }
+    public string Hash { get; set; } = string.Empty;
     
     [Id(1)]
     public int GameId { get; set; }
@@ -57,4 +60,11 @@ public record HomeRunRecord
 
     [Id(17)]
     public string PitcherName { get; set; } = string.Empty;
+
+    public static string GetHash(string description, int gameId)
+    {
+        var descriptionHash = MD5.HashData(Encoding.UTF8.GetBytes(description + gameId));
+        var descriptionHashString = BitConverter.ToString(descriptionHash).Replace("-", string.Empty);
+        return descriptionHashString;
+    }
 }

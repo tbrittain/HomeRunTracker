@@ -1,10 +1,10 @@
 ﻿using System.Diagnostics;
+using HomeRunTracker.Backend.Hubs;
 using HomeRunTracker.Backend.Services;
 using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
-using Orleans.Runtime;
-using Orleans.Streams;
+using Microsoft.AspNetCore.SignalR;
 
 namespace HomeRunTracker.Backend.Grains;
 
@@ -13,23 +13,15 @@ public class GameListGrain : Grain, IGameListGrain
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<GameListGrain> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private IAsyncStream<HomeRunNotification> _homeRunStream = null!;
+    private readonly IHubContext<HomeRunHub> _hubContext;
 
-    public GameListGrain(IClusterClient clusterClient, ILogger<GameListGrain> logger, IServiceProvider serviceProvider)
+    public GameListGrain(IClusterClient clusterClient, ILogger<GameListGrain> logger, IServiceProvider serviceProvider,
+        IHubContext<HomeRunHub> hubContext)
     {
         _clusterClient = clusterClient;
         _logger = logger;
         _serviceProvider = serviceProvider;
-    }
-
-    public override Task OnActivateAsync(CancellationToken cancellationToken)
-    {
-        var streamProvider = this.GetStreamProvider("HomeRuns");
-        var streamId = StreamId.Create("HomeRuns", this.GetPrimaryKeyString());
-        
-        _homeRunStream = streamProvider.GetStream<HomeRunNotification>(streamId);
-        
-        return base.OnActivateAsync(cancellationToken);
+        _hubContext = hubContext;
     }
 
     public async Task<List<HomeRunRecord>> GetHomeRunsAsync()
@@ -38,13 +30,13 @@ public class GameListGrain : Grain, IGameListGrain
         var pollingService = _serviceProvider.GetService<MlbApiPollingService>();
         if (pollingService is null)
             throw new InvalidOperationException("MlbApiPollingService not found");
-        
+
         var gameIds = pollingService.TrackedGameIds;
-        
+
         var gameGrains = gameIds
             .Select(id => _clusterClient.GetGrain<IGameGrain>(id))
             .ToList();
-        
+
         var allHomeRuns = new List<HomeRunRecord>();
         foreach (var grain in gameGrains)
         {
@@ -57,10 +49,10 @@ public class GameListGrain : Grain, IGameListGrain
                 {
                     var homeRunEvent = play.Events.Single(e => e.HitData is not null).HitData;
                     Debug.Assert(homeRunEvent != null, nameof(homeRunEvent) + " != null");
-                    
+
                     return new HomeRunRecord
                     {
-                        Id = Guid.NewGuid(),
+                        Hash = HomeRunRecord.GetHash(play.Result.Description, game.Id),
                         GameId = game.Id,
                         DateTime = play.DateTime,
                         BatterId = play.PlayerMatchup.Batter.Id,
@@ -77,7 +69,7 @@ public class GameListGrain : Grain, IGameListGrain
                     };
                 })
                 .ToList();
-            
+
             allHomeRuns.AddRange(homeRuns);
         }
 
@@ -85,9 +77,12 @@ public class GameListGrain : Grain, IGameListGrain
         return allHomeRuns;
     }
 
-    public Task PublishHomeRunAsync(HomeRunNotification notification)
+    public async Task PublishHomeRunAsync(HomeRunNotification notification)
     {
-        _logger.LogInformation("Publishing home run for game {GameId}", notification.GameId.ToString());
-        return _homeRunStream.OnNextAsync(notification);
+        _logger.LogInformation("Publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
+            notification.GameId.ToString());
+        await _hubContext.Clients.All.SendAsync("ReceiveHomeRun", notification.HomeRun);
+        _logger.LogInformation("Finished publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
+            notification.GameId.ToString());
     }
 }

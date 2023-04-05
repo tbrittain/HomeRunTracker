@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeRunTracker.Backend", "H
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeRunTracker.Common", "HomeRunTracker.Common\HomeRunTracker.Common.csproj", "{3BA66BA8-45A8-43BE-813C-687EA6A2897A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeRunTracker.Frontend", "HomeRunTracker.Frontend\HomeRunTracker.Frontend.csproj", "{CCCE0210-A5D6-4134-98F5-B2D313DAF1FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{3BA66BA8-45A8-43BE-813C-687EA6A2897A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3BA66BA8-45A8-43BE-813C-687EA6A2897A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3BA66BA8-45A8-43BE-813C-687EA6A2897A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCCE0210-A5D6-4134-98F5-B2D313DAF1FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCCE0210-A5D6-4134-98F5-B2D313DAF1FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCCE0210-A5D6-4134-98F5-B2D313DAF1FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCCE0210-A5D6-4134-98F5-B2D313DAF1FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

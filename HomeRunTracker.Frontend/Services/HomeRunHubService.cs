@@ -8,9 +8,12 @@ public class HomeRunHubService
 {
     private readonly HubConnection _hubConnection;
 
-    public HomeRunHubService(HubConnection hubConnection)
+    public HomeRunHubService()
     {
-        _hubConnection = hubConnection;
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl("http://localhost:5001/home-run-hub")
+            .WithAutomaticReconnect()
+            .Build();
     }
 
     public async Task StartHubConnection()

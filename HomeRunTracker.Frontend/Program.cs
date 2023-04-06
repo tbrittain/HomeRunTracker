@@ -1,3 +1,4 @@
+using HomeRunTracker.Frontend.Services;
 using HomeRunTracker.Frontend.Services.HttpService;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,11 +7,15 @@ builder.Services.AddOrleansClient(clientBuilder =>
 {
     clientBuilder.UseLocalhostClustering();
 });
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+});
 builder.Services.AddHttpClient();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<IHttpService, HttpService>();
+builder.Services.AddScoped<HomeRunHubService>();
 
 var app = builder.Build();
 

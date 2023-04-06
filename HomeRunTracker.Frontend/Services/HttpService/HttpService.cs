@@ -17,7 +17,7 @@ public class HttpService : IHttpService
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri("http://localhost:5001");
         
-        var response = await httpClient.GetAsync("/home-runs");
+        var response = await httpClient.GetAsync("/api/home-runs");
         response.EnsureSuccessStatusCode();
         
         var content = await response.Content.ReadAsStringAsync();

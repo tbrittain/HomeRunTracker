@@ -9,7 +9,7 @@ public class MlbApiPollingService : BackgroundService
     private readonly IGrainFactory _grainFactory;
     private readonly HttpClient _httpClient;
     private readonly ILogger<MlbApiPollingService> _logger;
-    private readonly TimeSpan _pollingInterval = TimeSpan.FromHours(4);
+    private readonly TimeSpan _pollingInterval = TimeSpan.FromDays(1);
     internal readonly List<int> TrackedGameIds = new();
 
     public MlbApiPollingService(HttpClient httpClient, IGrainFactory grainFactory, ILogger<MlbApiPollingService> logger)
@@ -33,12 +33,11 @@ public class MlbApiPollingService : BackgroundService
                 continue;
             }
 
-            var newGames = schedule.Dates[0].Games
+            var games = schedule.Dates[0].Games
                 .Where(g => !TrackedGameIds.Contains(g.Id))
-                .Where(g => g.GameStatus.Status is EMlbGameStatus.InProgress or EMlbGameStatus.PreGame)
                 .ToList();
 
-            var trackedGameIds = await FanOutGameGrainsAsync(newGames);
+            var trackedGameIds = await FanOutGameGrainsAsync(games);
             TrackedGameIds.AddRange(trackedGameIds);
 
             await Task.Delay(_pollingInterval, stoppingToken);

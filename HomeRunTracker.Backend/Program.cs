@@ -40,7 +40,7 @@ builder.Services.AddHostedService<MlbApiPollingService>(p => p.GetRequiredServic
 var app = builder.Build();
 
 app.MapHub<HomeRunHub>("home-run-hub");
-app.MapGet("home-runs", async (IClusterClient client) =>
+app.MapGet("api/home-runs", async (IClusterClient client) =>
 {
     var grain = client.GetGrain<IGameListGrain>(0);
     var homeRuns = (await grain.GetHomeRunsAsync())
@@ -57,5 +57,4 @@ if (app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseDefaultFiles();
 app.UseRouting();
-app.UseHttpsRedirection();
 app.Run();

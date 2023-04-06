@@ -49,7 +49,9 @@
 
     private async Task OnHomeRunReceived(HomeRunRecord homeRun)
     {
-        _homeRuns.Add(homeRun);
+        _homeRuns = _homeRuns.Append(homeRun)
+            .OrderByDescending(hr => hr.TotalDistance)
+            .ToList();
         await InvokeAsync(StateHasChanged);
     }
 }

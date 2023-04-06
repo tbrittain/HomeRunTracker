@@ -4,16 +4,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOrleansClient(clientBuilder =>
 {
-    clientBuilder.UseLocalhostClustering()
-        .AddMemoryStreams("HomeRuns");
+    clientBuilder.UseLocalhostClustering();
 });
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<IHttpService, HttpService>();
-
-// https://github.com/dotnet/samples/blob/main/orleans/ChatRoom/ChatRoom.Client/StreamObserver.cs
 
 var app = builder.Build();
 

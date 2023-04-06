@@ -5,6 +5,7 @@ using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
 using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json;
 
 namespace HomeRunTracker.Backend.Grains;
 
@@ -81,7 +82,7 @@ public class GameListGrain : Grain, IGameListGrain
     {
         _logger.LogInformation("Publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
             notification.GameId.ToString());
-        await _hubContext.Clients.All.SendAsync("ReceiveHomeRun", notification.HomeRun);
+        await _hubContext.Clients.All.SendAsync("ReceiveHomeRun", JsonConvert.SerializeObject(notification.HomeRun));
         _logger.LogInformation("Finished publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
             notification.GameId.ToString());
     }

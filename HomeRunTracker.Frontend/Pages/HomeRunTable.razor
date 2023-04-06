@@ -1,33 +1,35 @@
 ﻿@using HomeRunTracker.Frontend.Services.HttpService
 @using HomeRunTracker.Common.Models.Internal
+@using HomeRunTracker.Frontend.Services
 @inject IHttpService HttpService
+@inject HomeRunHubService HomeRunHubService
 
 <table>
     <thead>
-        <tr>
-            <th>Batter Name</th>
-            <th>Distance</th>
-            <th>Launch Angle</th>
-            <th>Launch Speed</th>
-            <th>Date</th>
-            <th>RBI</th>
-            <th>Description</th>
-        </tr>
+    <tr>
+        <th>Batter Name</th>
+        <th>Distance</th>
+        <th>Launch Angle</th>
+        <th>Launch Speed</th>
+        <th>Date</th>
+        <th>RBI</th>
+        <th>Description</th>
+    </tr>
     </thead>
     <tbody>
-        @foreach (var record in _homeRuns)
-        {
-            <tr>
-                <td>@record.BatterName</td>
-                <td>@record.TotalDistance</td>
-                <td>@record.LaunchAngle</td>
-                <td>@record.LaunchSpeed</td>
-                <td>@record.DateTime.ToString("T")</td>
-                <td>@record.Rbi</td>
-                <td>@record.Description</td>
-                <td></td>
-            </tr>
-        }
+    @foreach (var record in _homeRuns)
+    {
+        <tr>
+            <td>@record.BatterName</td>
+            <td>@record.TotalDistance</td>
+            <td>@record.LaunchAngle</td>
+            <td>@record.LaunchSpeed</td>
+            <td>@record.DateTime.ToString("T")</td>
+            <td>@record.Rbi</td>
+            <td>@record.Description</td>
+            <td></td>
+        </tr>
+    }
     </tbody>
 </table>
 
@@ -36,6 +38,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Get home runs that have already been recorded
         _homeRuns = await HttpService.GetHomeRunsAsync();
+
+        // Subscribe to the hub to receive new home runs
+        await HomeRunHubService.StartHubConnection();
+        HomeRunHubService.OnHomeRunReceived += OnHomeRunReceived;
+        HomeRunHubService.SubscribeToHubMethods();
+    }
+
+    private async Task OnHomeRunReceived(HomeRunRecord homeRun)
+    {
+        _homeRuns.Add(homeRun);
+        await InvokeAsync(StateHasChanged);
     }
 }

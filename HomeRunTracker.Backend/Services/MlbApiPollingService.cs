@@ -1,22 +1,22 @@
 ﻿using HomeRunTracker.Backend.Grains;
+using HomeRunTracker.Backend.Services.HttpService;
 using HomeRunTracker.Common.Models.Summary;
-using Newtonsoft.Json;
 
 namespace HomeRunTracker.Backend.Services;
 
 public class MlbApiPollingService : BackgroundService
 {
     private readonly IGrainFactory _grainFactory;
-    private readonly HttpClient _httpClient;
+    private readonly IHttpService _httpService;
     private readonly ILogger<MlbApiPollingService> _logger;
-    private readonly TimeSpan _pollingInterval = TimeSpan.FromDays(1);
-    internal readonly List<int> TrackedGameIds = new();
+    private readonly TimeSpan _pollingInterval = TimeSpan.FromHours(4);
+    internal readonly List<int> TrackedCurrentDayGameIds = new();
 
-    public MlbApiPollingService(HttpClient httpClient, IGrainFactory grainFactory, ILogger<MlbApiPollingService> logger)
+    public MlbApiPollingService(IGrainFactory grainFactory, ILogger<MlbApiPollingService> logger, IHttpService httpService)
     {
-        _httpClient = httpClient;
         _grainFactory = grainFactory;
         _logger = logger;
+        _httpService = httpService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -24,7 +24,7 @@ public class MlbApiPollingService : BackgroundService
         _logger.LogInformation("Starting MLB API polling service");
         while (!stoppingToken.IsCancellationRequested)
         {
-            var schedule = await FetchGamesAsync();
+            var schedule = await _httpService.FetchGamesAsync(DateTime.Now);
 
             if (schedule.TotalGames == 0)
             {
@@ -34,46 +34,22 @@ public class MlbApiPollingService : BackgroundService
             }
 
             var games = schedule.Dates[0].Games
-                .Where(g => !TrackedGameIds.Contains(g.Id))
+                .Where(g => !TrackedCurrentDayGameIds.Contains(g.Id))
                 .ToList();
 
             var trackedGameIds = await FanOutGameGrainsAsync(games);
-            TrackedGameIds.AddRange(trackedGameIds);
+            TrackedCurrentDayGameIds.AddRange(trackedGameIds);
 
             await Task.Delay(_pollingInterval, stoppingToken);
         }
 
-        foreach (var trackedGameId in TrackedGameIds)
+        foreach (var trackedGameId in TrackedCurrentDayGameIds)
         {
             var gameGrain = _grainFactory.GetGrain<IGameGrain>(trackedGameId);
             await gameGrain.StopAsync();
         }
 
         _logger.LogInformation("Stopping MLB API polling service");
-    }
-
-    private async Task<MlbSchedule> FetchGamesAsync()
-    {
-        var today = DateTime.Now.ToString("yyyy-MM-dd");
-        var url = $"https://statsapi.mlb.com/api/v1/schedule/games/?sportId=1&startDate={today}&endDate={today}";
-
-        var response = await _httpClient.GetAsync(url);
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError("Failed to fetch games from MLB API; status code: {StatusCode}", response.StatusCode);
-            throw new Exception("Failed to fetch games from MLB API; status code: " + response.StatusCode);
-        }
-
-        var content = await response.Content.ReadAsStringAsync();
-        var schedule = JsonConvert.DeserializeObject<MlbSchedule>(content);
-
-        if (schedule is null)
-        {
-            _logger.LogError("Failed to deserialize MLB API response");
-            throw new Exception("Failed to deserialize MLB API response");
-        }
-
-        return schedule;
     }
 
     private async Task<List<int>> FanOutGameGrainsAsync(List<MlbGameSummary> games)
@@ -92,6 +68,6 @@ public class MlbApiPollingService : BackgroundService
 
     public void RemoveGame(int gameId)
     {
-        TrackedGameIds.Remove(gameId);
+        TrackedCurrentDayGameIds.Remove(gameId);
     }
 }

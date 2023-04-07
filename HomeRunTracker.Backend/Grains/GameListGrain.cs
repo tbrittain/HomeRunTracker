@@ -32,7 +32,7 @@ public class GameListGrain : Grain, IGameListGrain
         if (pollingService is null)
             throw new InvalidOperationException("MlbApiPollingService not found");
 
-        var gameIds = pollingService.TrackedGameIds;
+        var gameIds = pollingService.TrackedCurrentDayGameIds;
 
         var gameGrains = gameIds
             .Select(id => _clusterClient.GetGrain<IGameGrain>(id))

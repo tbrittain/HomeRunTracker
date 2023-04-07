@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using HomeRunTracker.Backend.Services.HttpService;
 using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
@@ -12,7 +13,7 @@ public class GameGrain : Grain, IGameGrain
 {
     private readonly List<string> _homeRunHashes = new();
     private readonly HashSet<MlbPlay> _homeRuns = new();
-    private readonly HttpClient _httpClient;
+    private readonly IHttpService _httpService;
     private readonly ILogger<GameGrain> _logger;
     private readonly IMediator _mediator;
     private string _gameContentLink = string.Empty; // TODO: use this, check #2
@@ -20,11 +21,11 @@ public class GameGrain : Grain, IGameGrain
     private int _gameId;
     private bool _isInitialLoad = true;
 
-    public GameGrain(HttpClient httpClient, ILogger<GameGrain> logger, IMediator mediator)
+    public GameGrain(ILogger<GameGrain> logger, IMediator mediator, IHttpService httpService)
     {
-        _httpClient = httpClient;
         _logger = logger;
         _mediator = mediator;
+        _httpService = httpService;
     }
 
     public async Task<int> InitializeAsync(MlbGameSummary game)
@@ -32,12 +33,12 @@ public class GameGrain : Grain, IGameGrain
         _gameId = game.Id;
         _gameContentLink = game.Content.Link;
 
-        _logger.LogInformation("Initializing game grain {GameId}", game.Id.ToString());
+        _logger.LogInformation("Initializing game grain {GameId}", _gameId.ToString());
         RegisterTimer(async _ =>
         {
-            _logger.LogDebug("Polling game {GameId}", game.Id.ToString());
+            _logger.LogDebug("Polling game {GameId}", _gameId.ToString());
 
-            var gameDetails = await FetchGameDataAsync();
+            var gameDetails = await _httpService.FetchGameDetailsAsync(_gameId);
 
             switch (gameDetails.GameData.Status.Status)
             {
@@ -130,29 +131,5 @@ public class GameGrain : Grain, IGameGrain
 
         await _mediator.Publish(new HomeRunNotification(_gameId, homeRunRecord));
         _homeRunHashes.Add(descriptionHashString);
-    }
-
-    private async Task<MlbGameDetails> FetchGameDataAsync()
-    {
-        _logger.LogDebug("Fetching game data for game {GameId}", _gameId.ToString());
-        var url = $"https://statsapi.mlb.com/api/v1.1/game/{_gameId}/feed/live";
-
-        var response = await _httpClient.GetAsync(url);
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError("Failed to fetch game data for game {GameId}", _gameId.ToString());
-            throw new Exception($"Failed to fetch game data for game {_gameId}");
-        }
-
-        var content = await response.Content.ReadAsStringAsync();
-        var updatedGame = JsonConvert.DeserializeObject<MlbGameDetails>(content);
-
-        if (updatedGame is null)
-        {
-            _logger.LogError("Failed to deserialize game data for game {GameId}", _gameId.ToString());
-            throw new Exception($"Failed to deserialize game data for game {_gameId}");
-        }
-
-        return updatedGame;
     }
 }

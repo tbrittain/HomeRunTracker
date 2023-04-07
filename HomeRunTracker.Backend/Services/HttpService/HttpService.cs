@@ -15,7 +15,7 @@ public class HttpService : IHttpService
         _logger = logger;
     }
 
-    public async Task<MlbSchedule> FetchGamesAsync(DateTime dateTime)
+    public async Task<MlbSchedule> FetchGames(DateTime dateTime)
     {
         var formattedDate = dateTime.ToString("yyyy-MM-dd");
         var url =
@@ -42,7 +42,7 @@ public class HttpService : IHttpService
         return schedule;
     }
 
-    public async Task<MlbGameDetails> FetchGameDetailsAsync(int gameId)
+    public async Task<MlbGameDetails> FetchGameDetails(int gameId)
     {
         _logger.LogDebug("Fetching game data for game {GameId}", gameId.ToString());
         var url = $"https://statsapi.mlb.com/api/v1.1/game/{gameId}/feed/live";

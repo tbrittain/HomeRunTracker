@@ -5,6 +5,6 @@ namespace HomeRunTracker.Backend.Services.HttpService;
 
 public interface IHttpService
 {
-    Task<MlbSchedule> FetchGamesAsync(DateTime dateTime);
-    Task<MlbGameDetails> FetchGameDetailsAsync(int gameId);
+    Task<MlbSchedule> FetchGames(DateTime dateTime);
+    Task<MlbGameDetails> FetchGameDetails(int gameId);
 }

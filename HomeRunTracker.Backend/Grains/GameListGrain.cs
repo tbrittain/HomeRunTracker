@@ -28,14 +28,14 @@ public class GameListGrain : Grain, IGameListGrain
         _httpService = httpService;
     }
 
-    public async Task<List<HomeRunRecord>> GetHomeRunsAsync(DateTime dateTime)
+    public async Task<List<HomeRunRecord>> GetHomeRuns(DateTime dateTime)
     {
         _logger.LogInformation("Getting all home runs");
-        var pollingService = _serviceProvider.GetService<MlbApiPollingService>();
+        var pollingService = _serviceProvider.GetService<MlbCurrentDayGamePollingService>();
         if (pollingService is null)
             throw new InvalidOperationException("MlbApiPollingService not found");
 
-        var gameSchedule = await _httpService.FetchGamesAsync(dateTime);
+        var gameSchedule = await _httpService.FetchGames(dateTime);
 
         if (gameSchedule.TotalGames == 0)
             return new List<HomeRunRecord>();
@@ -52,7 +52,7 @@ public class GameListGrain : Grain, IGameListGrain
         var allHomeRuns = new List<HomeRunRecord>();
         foreach (var grain in gameGrains)
         {
-            var game = await grain.GetGameAsync();
+            var game = await grain.GetGame();
 
             _logger.LogInformation("Getting home runs for game {GameId}", game.Id.ToString());
             var homeRuns = game.LiveData.Plays.AllPlays
@@ -89,7 +89,7 @@ public class GameListGrain : Grain, IGameListGrain
         return allHomeRuns;
     }
 
-    public async Task PublishHomeRunAsync(HomeRunNotification notification)
+    public async Task PublishHomeRun(HomeRunNotification notification)
     {
         _logger.LogInformation("Publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
             notification.GameId.ToString());

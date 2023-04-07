@@ -36,8 +36,8 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.Get
 builder.Services.AddScoped<INotificationHandler<GameStoppedNotification>, GameRemovedHandler>();
 builder.Services.AddScoped<INotificationHandler<HomeRunNotification>, HomeRunHandler>();
 builder.Services.AddSingleton<IHttpService, HttpService>();
-builder.Services.AddSingleton<MlbApiPollingService>();
-builder.Services.AddHostedService<MlbApiPollingService>(p => p.GetRequiredService<MlbApiPollingService>());
+builder.Services.AddSingleton<MlbCurrentDayGamePollingService>();
+builder.Services.AddHostedService<MlbCurrentDayGamePollingService>(p => p.GetRequiredService<MlbCurrentDayGamePollingService>());
 
 var app = builder.Build();
 
@@ -45,7 +45,7 @@ app.MapHub<HomeRunHub>("home-run-hub");
 app.MapGet("api/home-runs", async (IClusterClient client, DateTime? date) =>
 {
     var grain = client.GetGrain<IGameListGrain>(0);
-    var homeRuns = await grain.GetHomeRunsAsync(date ?? DateTime.Now);
+    var homeRuns = await grain.GetHomeRuns(date ?? DateTime.Now);
     return Results.Ok(homeRuns);
 });
 

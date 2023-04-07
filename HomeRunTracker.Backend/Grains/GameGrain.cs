@@ -32,17 +32,17 @@ public class GameGrain : Grain, IGameGrain
         _gameId = (int)this.GetPrimaryKeyLong();
         _logger.LogInformation("Initializing game grain {GameId}", _gameId.ToString());
         
-        await InitialFetchGameAsync();
-        RegisterTimer(PollGameAsync, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+        await InitialFetchGame();
+        RegisterTimer(PollGame, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
         
         await base.OnActivateAsync(cancellationToken);
     }
 
-    private async Task InitialFetchGameAsync()
+    private async Task InitialFetchGame()
     {
         _logger.LogDebug("Initial fetch for game {GameId}", _gameId.ToString());
         
-        var gameDetails = await _httpService.FetchGameDetailsAsync(_gameId);
+        var gameDetails = await _httpService.FetchGameDetails(_gameId);
         
         var homeRuns = gameDetails.LiveData.Plays.AllPlays
             .Where(p => p.Result.Result is EPlayResult.HomeRun)
@@ -58,12 +58,12 @@ public class GameGrain : Grain, IGameGrain
         _isInitialLoad = false;
     }
 
-    private async Task PollGameAsync(object _)
+    private async Task PollGame(object _)
     {
         if (_isInitialLoad) return;
         _logger.LogDebug("Polling game {GameId}", _gameId.ToString());
 
-        var gameDetails = await _httpService.FetchGameDetailsAsync(_gameId);
+        var gameDetails = await _httpService.FetchGameDetails(_gameId);
         
         _gameDetails = gameDetails;
 
@@ -81,7 +81,7 @@ public class GameGrain : Grain, IGameGrain
                 break;
             default:
                 _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());
-                await StopAsync();
+                await Stop();
                 return;
         }
 
@@ -96,12 +96,12 @@ public class GameGrain : Grain, IGameGrain
         await Task.WhenAll(tasks);
     }
 
-    public async Task<MlbGameDetails> GetGameAsync()
+    public async Task<MlbGameDetails> GetGame()
     {
         return await Task.FromResult(_gameDetails);
     }
 
-    public async Task StopAsync()
+    public async Task Stop()
     {
         _logger.LogInformation("Stopping game grain {GameId}", _gameId.ToString());
         DeactivateOnIdle();

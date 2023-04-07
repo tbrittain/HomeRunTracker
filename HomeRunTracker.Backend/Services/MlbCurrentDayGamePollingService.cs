@@ -5,15 +5,15 @@ using HomeRunTracker.Common.Models.Summary;
 
 namespace HomeRunTracker.Backend.Services;
 
-public class MlbApiPollingService : BackgroundService
+public class MlbCurrentDayGamePollingService : BackgroundService
 {
     private readonly IGrainFactory _grainFactory;
     private readonly IHttpService _httpService;
-    private readonly ILogger<MlbApiPollingService> _logger;
+    private readonly ILogger<MlbCurrentDayGamePollingService> _logger;
     private readonly TimeSpan _pollingInterval = TimeSpan.FromHours(4);
     private readonly List<int> _trackedCurrentDayGameIds = new();
 
-    public MlbApiPollingService(IGrainFactory grainFactory, ILogger<MlbApiPollingService> logger,
+    public MlbCurrentDayGamePollingService(IGrainFactory grainFactory, ILogger<MlbCurrentDayGamePollingService> logger,
         IHttpService httpService)
     {
         _grainFactory = grainFactory;
@@ -26,7 +26,7 @@ public class MlbApiPollingService : BackgroundService
         _logger.LogInformation("Starting MLB API polling service");
         while (!stoppingToken.IsCancellationRequested)
         {
-            var schedule = await _httpService.FetchGamesAsync(DateTime.Now);
+            var schedule = await _httpService.FetchGames(DateTime.Now);
 
             if (schedule.TotalGames == 0)
             {
@@ -39,7 +39,7 @@ public class MlbApiPollingService : BackgroundService
                 .Where(g => !_trackedCurrentDayGameIds.Contains(g.Id))
                 .ToList();
 
-            var trackedGameIds = await FanOutGameGrainsAsync(games);
+            var trackedGameIds = await FanOutGameGrains(games);
             _trackedCurrentDayGameIds.AddRange(trackedGameIds);
 
             await Task.Delay(_pollingInterval, stoppingToken);
@@ -48,20 +48,20 @@ public class MlbApiPollingService : BackgroundService
         foreach (var trackedGameId in _trackedCurrentDayGameIds)
         {
             var gameGrain = _grainFactory.GetGrain<IGameGrain>(trackedGameId);
-            await gameGrain.StopAsync();
+            await gameGrain.Stop();
         }
 
         _logger.LogInformation("Stopping MLB API polling service");
     }
 
-    private async Task<List<int>> FanOutGameGrainsAsync(List<MlbGameSummary> games)
+    private async Task<List<int>> FanOutGameGrains(List<MlbGameSummary> games)
     {
         _logger.LogInformation("Fanning out {Count} game grains", games.Count.ToString());
         List<Task<MlbGameDetails>> initializedGameTasks = new();
         foreach (var game in games)
         {
             var grain = _grainFactory.GetGrain<IGameGrain>(game.Id);
-            var task = grain.GetGameAsync();
+            var task = grain.GetGame();
             initializedGameTasks.Add(task);
         }
         
@@ -70,7 +70,7 @@ public class MlbApiPollingService : BackgroundService
         return initializedGameTasks.Select(t => t.Result.Id).ToList();
     }
 
-    public void RemoveGame(int gameId)
+    public void UntrackGame(int gameId)
     {
         _trackedCurrentDayGameIds.Remove(gameId);
     }

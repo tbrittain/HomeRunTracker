@@ -28,53 +28,78 @@ public class GameGrain : Grain, IGameGrain
         _httpService = httpService;
     }
 
-    public async Task<int> InitializeAsync(MlbGameSummary game)
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
-        _gameId = game.Id;
-        _gameContentLink = game.Content.Link;
-
+        _gameId = (int)this.GetPrimaryKeyLong();
         _logger.LogInformation("Initializing game grain {GameId}", _gameId.ToString());
-        RegisterTimer(async _ =>
+        
+        await InitialFetchGameAsync();
+
+        if (_gameDetails.GameData.Status.Status is not EMlbGameStatus.Final)
         {
-            _logger.LogDebug("Polling game {GameId}", _gameId.ToString());
+            RegisterTimer(PollGameAsync, null, TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2));
+        }
 
-            var gameDetails = await _httpService.FetchGameDetailsAsync(_gameId);
+        await base.OnActivateAsync(cancellationToken);
+    }
 
-            switch (gameDetails.GameData.Status.Status)
-            {
-                case EMlbGameStatus.PreGame:
-                    _logger.LogInformation("Game {GameId} is in pre-game", _gameId.ToString());
-                    await Task.Delay(TimeSpan.FromMinutes(15));
-                    return;
-                case EMlbGameStatus.Warmup:
-                    _logger.LogInformation("Game {GameId} is warming up", _gameId.ToString());
-                    await Task.Delay(TimeSpan.FromMinutes(5));
-                    return;
-            }
+    private async Task InitialFetchGameAsync()
+    {
+        _logger.LogDebug("Initial fetch for game {GameId}", _gameId.ToString());
+        
+        var gameDetails = await _httpService.FetchGameDetailsAsync(_gameId);
+        
+        var homeRuns = gameDetails.LiveData.Plays.AllPlays
+            .Where(p => p.Result.Result is EPlayResult.HomeRun)
+            .ToList();
+        
+        var tasks = homeRuns
+            .Where(homeRun => !_homeRuns.Contains(homeRun))
+            .Select(ValidateHomeRun)
+            .ToList();
+        await Task.WhenAll(tasks);
+        
+        _gameDetails = gameDetails;
+        _isInitialLoad = false;
+    }
 
-            var homeRuns = gameDetails.LiveData.Plays.AllPlays
-                .Where(p => p.Result.Result is EPlayResult.HomeRun)
-                .ToList();
+    private async Task PollGameAsync(object _)
+    {
+        if (_isInitialLoad) return;
+        _logger.LogDebug("Polling game {GameId}", _gameId.ToString());
 
-            var tasks = homeRuns
-                .Where(homeRun => !_homeRuns.Contains(homeRun))
-                .Select(ValidateHomeRun)
-                .ToList();
-            await Task.WhenAll(tasks);
+        var gameDetails = await _httpService.FetchGameDetailsAsync(_gameId);
 
-            if (gameDetails.GameData.Status.Status is not EMlbGameStatus.InProgress)
-            {
-                _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());
-                await StopAsync();
+        switch (gameDetails.GameData.Status.Status)
+        {
+            case EMlbGameStatus.PreGame:
+                _logger.LogInformation("Game {GameId} is in pre-game", _gameId.ToString());
+                await Task.Delay(TimeSpan.FromMinutes(15));
                 return;
-            }
+            case EMlbGameStatus.Warmup:
+                _logger.LogInformation("Game {GameId} is warming up", _gameId.ToString());
+                await Task.Delay(TimeSpan.FromMinutes(5));
+                return;
+        }
 
-            _gameDetails = gameDetails;
-            _isInitialLoad = false;
-        }, null, TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(1));
+        var homeRuns = gameDetails.LiveData.Plays.AllPlays
+            .Where(p => p.Result.Result is EPlayResult.HomeRun)
+            .ToList();
 
-        await base.OnActivateAsync(default);
-        return _gameId;
+        var tasks = homeRuns
+            .Where(homeRun => !_homeRuns.Contains(homeRun))
+            .Select(ValidateHomeRun)
+            .ToList();
+        await Task.WhenAll(tasks);
+
+        if (gameDetails.GameData.Status.Status is not EMlbGameStatus.InProgress)
+        {
+            _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());
+            await StopAsync();
+            return;
+        }
+
+        _gameDetails = gameDetails;
     }
 
     public async Task<MlbGameDetails> GetGameAsync()

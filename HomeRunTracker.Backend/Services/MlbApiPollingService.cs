@@ -10,9 +10,10 @@ public class MlbApiPollingService : BackgroundService
     private readonly IHttpService _httpService;
     private readonly ILogger<MlbApiPollingService> _logger;
     private readonly TimeSpan _pollingInterval = TimeSpan.FromHours(4);
-    internal readonly List<int> TrackedCurrentDayGameIds = new();
+    private readonly List<int> _trackedCurrentDayGameIds = new();
 
-    public MlbApiPollingService(IGrainFactory grainFactory, ILogger<MlbApiPollingService> logger, IHttpService httpService)
+    public MlbApiPollingService(IGrainFactory grainFactory, ILogger<MlbApiPollingService> logger,
+        IHttpService httpService)
     {
         _grainFactory = grainFactory;
         _logger = logger;
@@ -34,16 +35,16 @@ public class MlbApiPollingService : BackgroundService
             }
 
             var games = schedule.Dates[0].Games
-                .Where(g => !TrackedCurrentDayGameIds.Contains(g.Id))
+                .Where(g => !_trackedCurrentDayGameIds.Contains(g.Id))
                 .ToList();
 
             var trackedGameIds = await FanOutGameGrainsAsync(games);
-            TrackedCurrentDayGameIds.AddRange(trackedGameIds);
+            _trackedCurrentDayGameIds.AddRange(trackedGameIds);
 
             await Task.Delay(_pollingInterval, stoppingToken);
         }
 
-        foreach (var trackedGameId in TrackedCurrentDayGameIds)
+        foreach (var trackedGameId in _trackedCurrentDayGameIds)
         {
             var gameGrain = _grainFactory.GetGrain<IGameGrain>(trackedGameId);
             await gameGrain.StopAsync();
@@ -52,22 +53,19 @@ public class MlbApiPollingService : BackgroundService
         _logger.LogInformation("Stopping MLB API polling service");
     }
 
-    private async Task<List<int>> FanOutGameGrainsAsync(List<MlbGameSummary> games)
+    private Task<List<int>> FanOutGameGrainsAsync(List<MlbGameSummary> games)
     {
         _logger.LogInformation("Fanning out {Count} game grains", games.Count.ToString());
-        var tasks = new List<Task<int>>();
         foreach (var game in games)
         {
-            var gameGrain = _grainFactory.GetGrain<IGameGrain>(game.Id);
-            tasks.Add(gameGrain.InitializeAsync(game));
+            _ = _grainFactory.GetGrain<IGameGrain>(game.Id);
         }
 
-        await Task.WhenAll(tasks);
-        return tasks.Select(t => t.Result).ToList();
+        return Task.FromResult(games.Select(g => g.Id).ToList());
     }
 
     public void RemoveGame(int gameId)
     {
-        TrackedCurrentDayGameIds.Remove(gameId);
+        _trackedCurrentDayGameIds.Remove(gameId);
     }
 }

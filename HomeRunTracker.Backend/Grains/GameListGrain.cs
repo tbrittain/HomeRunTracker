@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using HomeRunTracker.Backend.Hubs;
 using HomeRunTracker.Backend.Services;
+using HomeRunTracker.Backend.Services.HttpService;
 using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
@@ -15,24 +16,34 @@ public class GameListGrain : Grain, IGameListGrain
     private readonly ILogger<GameListGrain> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly IHubContext<HomeRunHub> _hubContext;
+    private readonly IHttpService _httpService;
 
     public GameListGrain(IClusterClient clusterClient, ILogger<GameListGrain> logger, IServiceProvider serviceProvider,
-        IHubContext<HomeRunHub> hubContext)
+        IHubContext<HomeRunHub> hubContext, IHttpService httpService)
     {
         _clusterClient = clusterClient;
         _logger = logger;
         _serviceProvider = serviceProvider;
         _hubContext = hubContext;
+        _httpService = httpService;
     }
 
-    public async Task<List<HomeRunRecord>> GetHomeRunsAsync()
+    public async Task<List<HomeRunRecord>> GetHomeRunsAsync(DateTime dateTime)
     {
         _logger.LogInformation("Getting all home runs");
         var pollingService = _serviceProvider.GetService<MlbApiPollingService>();
         if (pollingService is null)
             throw new InvalidOperationException("MlbApiPollingService not found");
 
-        var gameIds = pollingService.TrackedCurrentDayGameIds;
+        var gameSchedule = await _httpService.FetchGamesAsync(dateTime);
+
+        if (gameSchedule.TotalGames == 0)
+            return new List<HomeRunRecord>();
+
+        var gameIds = gameSchedule.Dates
+            .SelectMany(x => x.Games
+                .Select(y => y.Id))
+            .ToList();
 
         var gameGrains = gameIds
             .Select(id => _clusterClient.GetGrain<IGameGrain>(id))

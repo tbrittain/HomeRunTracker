@@ -1,10 +1,10 @@
 ﻿using System.Diagnostics;
+using HomeRunTracker.Backend.Services.HttpService;
 using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
 using HomeRunTracker.Common.Models.Summary;
 using MediatR;
-using Newtonsoft.Json;
 
 namespace HomeRunTracker.Backend.Grains;
 
@@ -12,7 +12,7 @@ public class GameGrain : Grain, IGameGrain
 {
     private readonly List<string> _homeRunHashes = new();
     private readonly HashSet<MlbPlay> _homeRuns = new();
-    private readonly HttpClient _httpClient;
+    private readonly IHttpService _httpService;
     private readonly ILogger<GameGrain> _logger;
     private readonly IMediator _mediator;
     private string _gameContentLink = string.Empty; // TODO: use this, check #2
@@ -20,68 +20,88 @@ public class GameGrain : Grain, IGameGrain
     private int _gameId;
     private bool _isInitialLoad = true;
 
-    public GameGrain(HttpClient httpClient, ILogger<GameGrain> logger, IMediator mediator)
+    public GameGrain(ILogger<GameGrain> logger, IMediator mediator, IHttpService httpService)
     {
-        _httpClient = httpClient;
         _logger = logger;
         _mediator = mediator;
+        _httpService = httpService;
     }
 
-    public async Task<int> InitializeAsync(MlbGameSummary game)
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
-        _gameId = game.Id;
-        _gameContentLink = game.Content.Link;
-
-        _logger.LogInformation("Initializing game grain {GameId}", game.Id.ToString());
-        RegisterTimer(async _ =>
-        {
-            _logger.LogDebug("Polling game {GameId}", game.Id.ToString());
-
-            var gameDetails = await FetchGameDataAsync();
-
-            switch (gameDetails.GameData.Status.Status)
-            {
-                case EMlbGameStatus.PreGame:
-                    _logger.LogInformation("Game {GameId} is in pre-game", _gameId.ToString());
-                    await Task.Delay(TimeSpan.FromMinutes(15));
-                    return;
-                case EMlbGameStatus.Warmup:
-                    _logger.LogInformation("Game {GameId} is warming up", _gameId.ToString());
-                    await Task.Delay(TimeSpan.FromMinutes(5));
-                    return;
-            }
-
-            var homeRuns = gameDetails.LiveData.Plays.AllPlays
-                .Where(p => p.Result.Result is EPlayResult.HomeRun)
-                .ToList();
-
-            var tasks = homeRuns
-                .Where(homeRun => !_homeRuns.Contains(homeRun))
-                .Select(ValidateHomeRun)
-                .ToList();
-            await Task.WhenAll(tasks);
-
-            if (gameDetails.GameData.Status.Status is not EMlbGameStatus.InProgress)
-            {
-                _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());
-                await StopAsync();
-                return;
-            }
-
-            _gameDetails = gameDetails;
-            _isInitialLoad = false;
-        }, null, TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(1));
-
-        await base.OnActivateAsync(default);
-        return _gameId;
+        _gameId = (int)this.GetPrimaryKeyLong();
+        _logger.LogInformation("Initializing game grain {GameId}", _gameId.ToString());
+        
+        await InitialFetchGame();
+        RegisterTimer(PollGame, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+        
+        await base.OnActivateAsync(cancellationToken);
     }
 
-    public async Task<MlbGameDetails> GetGameAsync()
+    private async Task InitialFetchGame()
+    {
+        _logger.LogDebug("Initial fetch for game {GameId}", _gameId.ToString());
+        
+        var gameDetails = await _httpService.FetchGameDetails(_gameId);
+        
+        var homeRuns = gameDetails.LiveData.Plays.AllPlays
+            .Where(p => p.Result.Result is EPlayResult.HomeRun)
+            .ToList();
+        
+        var tasks = homeRuns
+            .Where(homeRun => !_homeRuns.Contains(homeRun))
+            .Select(ValidateHomeRun)
+            .ToList();
+        await Task.WhenAll(tasks);
+        
+        _gameDetails = gameDetails;
+        _isInitialLoad = false;
+    }
+
+    private async Task PollGame(object _)
+    {
+        if (_isInitialLoad) return;
+        _logger.LogDebug("Polling game {GameId}", _gameId.ToString());
+
+        var gameDetails = await _httpService.FetchGameDetails(_gameId);
+        
+        _gameDetails = gameDetails;
+
+        switch (gameDetails.GameData.Status.Status)
+        {
+            case EMlbGameStatus.PreGame:
+                _logger.LogInformation("Game {GameId} is in pre-game", _gameId.ToString());
+                await Task.Delay(TimeSpan.FromMinutes(15));
+                return;
+            case EMlbGameStatus.Warmup:
+                _logger.LogInformation("Game {GameId} is warming up", _gameId.ToString());
+                await Task.Delay(TimeSpan.FromMinutes(5));
+                return;
+            case EMlbGameStatus.InProgress:
+                break;
+            default:
+                _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());
+                await Stop();
+                return;
+        }
+
+        var homeRuns = gameDetails.LiveData.Plays.AllPlays
+            .Where(p => p.Result.Result is EPlayResult.HomeRun)
+            .ToList();
+
+        var tasks = homeRuns
+            .Where(homeRun => !_homeRuns.Contains(homeRun))
+            .Select(ValidateHomeRun)
+            .ToList();
+        await Task.WhenAll(tasks);
+    }
+
+    public async Task<MlbGameDetails> GetGame()
     {
         return await Task.FromResult(_gameDetails);
     }
 
-    public async Task StopAsync()
+    public async Task Stop()
     {
         _logger.LogInformation("Stopping game grain {GameId}", _gameId.ToString());
         DeactivateOnIdle();
@@ -130,29 +150,5 @@ public class GameGrain : Grain, IGameGrain
 
         await _mediator.Publish(new HomeRunNotification(_gameId, homeRunRecord));
         _homeRunHashes.Add(descriptionHashString);
-    }
-
-    private async Task<MlbGameDetails> FetchGameDataAsync()
-    {
-        _logger.LogDebug("Fetching game data for game {GameId}", _gameId.ToString());
-        var url = $"https://statsapi.mlb.com/api/v1.1/game/{_gameId}/feed/live";
-
-        var response = await _httpClient.GetAsync(url);
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError("Failed to fetch game data for game {GameId}", _gameId.ToString());
-            throw new Exception($"Failed to fetch game data for game {_gameId}");
-        }
-
-        var content = await response.Content.ReadAsStringAsync();
-        var updatedGame = JsonConvert.DeserializeObject<MlbGameDetails>(content);
-
-        if (updatedGame is null)
-        {
-            _logger.LogError("Failed to deserialize game data for game {GameId}", _gameId.ToString());
-            throw new Exception($"Failed to deserialize game data for game {_gameId}");
-        }
-
-        return updatedGame;
     }
 }

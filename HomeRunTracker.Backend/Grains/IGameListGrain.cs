@@ -5,7 +5,7 @@ namespace HomeRunTracker.Backend.Grains;
 
 public interface IGameListGrain : IGrainWithIntegerKey
 {
-    Task<List<HomeRunRecord>> GetHomeRunsAsync();
+    Task<List<HomeRunRecord>> GetHomeRuns(DateTime dateTime);
     
-    Task PublishHomeRunAsync(HomeRunNotification notification);
+    Task PublishHomeRun(HomeRunNotification notification);
 }

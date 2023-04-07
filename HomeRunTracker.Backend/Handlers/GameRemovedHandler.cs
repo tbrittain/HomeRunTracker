@@ -15,11 +15,11 @@ public class GameRemovedHandler : INotificationHandler<GameStoppedNotification>
 
     public Task Handle(GameStoppedNotification notification, CancellationToken cancellationToken)
     {
-        var pollingService = _serviceProvider.GetService<MlbApiPollingService>();
+        var pollingService = _serviceProvider.GetService<MlbCurrentDayGamePollingService>();
         if (pollingService is null)
             throw new InvalidOperationException("MlbApiPollingService not found");
         
-        pollingService.RemoveGame(notification.GameId);
+        pollingService.UntrackGame(notification.GameId);
         return Task.CompletedTask;
     }
 }

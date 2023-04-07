@@ -16,6 +16,6 @@ public class HomeRunHandler : INotificationHandler<HomeRunNotification>
     public async Task Handle(HomeRunNotification notification, CancellationToken cancellationToken)
     {
         var gameListGrain = _clusterClient.GetGrain<IGameListGrain>(0);
-        await gameListGrain.PublishHomeRunAsync(notification);
+        await gameListGrain.PublishHomeRun(notification);
     }
 }

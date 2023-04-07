@@ -35,7 +35,18 @@ public class GameListGrain : Grain, IGameListGrain
         if (pollingService is null)
             throw new InvalidOperationException("MlbApiPollingService not found");
 
-        var gameSchedule = await _httpService.FetchGames(dateTime);
+        var fetchGamesResponse = await _httpService.FetchGames(DateTime.Now);
+
+        if (fetchGamesResponse.TryPickT2(out var error, out var rest))
+        {
+            _logger.LogError("Failed to fetch games from MLB API: {Error}", error.Value);
+        }
+
+        if (rest.TryPickT1(out var failureStatusCode, out var gameSchedule))
+        {
+            _logger.LogError("Failed to fetch games from MLB API; status code: {StatusCode}",
+                failureStatusCode.ToString());
+        }
 
         if (gameSchedule.TotalGames == 0)
             return new List<HomeRunRecord>();

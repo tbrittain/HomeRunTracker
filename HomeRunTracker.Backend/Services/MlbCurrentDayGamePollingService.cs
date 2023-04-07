@@ -11,7 +11,7 @@ public class MlbCurrentDayGamePollingService : BackgroundService
     private readonly IHttpService _httpService;
     private readonly ILogger<MlbCurrentDayGamePollingService> _logger;
     private readonly TimeSpan _pollingInterval = TimeSpan.FromHours(4);
-    private readonly List<int> _trackedCurrentDayGameIds = new();
+    private readonly List<int> _trackedCurrentDayGameIds = new(15);
 
     public MlbCurrentDayGamePollingService(IGrainFactory grainFactory, ILogger<MlbCurrentDayGamePollingService> logger,
         IHttpService httpService)
@@ -26,7 +26,18 @@ public class MlbCurrentDayGamePollingService : BackgroundService
         _logger.LogInformation("Starting MLB API polling service");
         while (!stoppingToken.IsCancellationRequested)
         {
-            var schedule = await _httpService.FetchGames(DateTime.Now);
+            var fetchGamesResponse = await _httpService.FetchGames(DateTime.Now);
+
+            if (fetchGamesResponse.TryPickT2(out var error, out var rest))
+            {
+                _logger.LogError("Failed to fetch games from MLB API: {Error}", error.Value);
+            }
+
+            if (rest.TryPickT1(out var failureStatusCode, out var schedule))
+            {
+                _logger.LogError("Failed to fetch games from MLB API; status code: {StatusCode}",
+                    failureStatusCode.ToString());
+            }
 
             if (schedule.TotalGames == 0)
             {
@@ -64,7 +75,7 @@ public class MlbCurrentDayGamePollingService : BackgroundService
             var task = grain.GetGame();
             initializedGameTasks.Add(task);
         }
-        
+
         await Task.WhenAll(initializedGameTasks);
 
         return initializedGameTasks.Select(t => t.Result.Id).ToList();

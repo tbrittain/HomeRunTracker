@@ -29,60 +29,53 @@ public class GameGrain : Grain, IGameGrain
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
-        _gameId = (int)this.GetPrimaryKeyLong();
+        _gameId = (int) this.GetPrimaryKeyLong();
         _logger.LogInformation("Initializing game grain {GameId}", _gameId.ToString());
-        
-        await InitialFetchGame();
-        RegisterTimer(PollGame, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
-        
-        await base.OnActivateAsync(cancellationToken);
-    }
 
-    private async Task InitialFetchGame()
-    {
-        _logger.LogDebug("Initial fetch for game {GameId}", _gameId.ToString());
-        
-        var gameDetails = await _httpService.FetchGameDetails(_gameId);
-        
-        var homeRuns = gameDetails.LiveData.Plays.AllPlays
-            .Where(p => p.Result.Result is EPlayResult.HomeRun)
-            .ToList();
-        
-        var tasks = homeRuns
-            .Where(homeRun => !_homeRuns.Contains(homeRun))
-            .Select(ValidateHomeRun)
-            .ToList();
-        await Task.WhenAll(tasks);
-        
-        _gameDetails = gameDetails;
-        _isInitialLoad = false;
+        await PollGame(new object());
+        RegisterTimer(PollGame, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+
+        await base.OnActivateAsync(cancellationToken);
     }
 
     private async Task PollGame(object _)
     {
-        if (_isInitialLoad) return;
         _logger.LogDebug("Polling game {GameId}", _gameId.ToString());
 
-        var gameDetails = await _httpService.FetchGameDetails(_gameId);
-        
+        var fetchGameDetailsResponse = await _httpService.FetchGameDetails(_gameId);
+
+        if (fetchGameDetailsResponse.TryPickT2(out var error, out var rest))
+        {
+            _logger.LogError("Failed to fetch games from MLB API: {Error}", error.Value);
+        }
+
+        if (rest.TryPickT1(out var failureStatusCode, out var gameDetails))
+        {
+            _logger.LogError("Failed to fetch game details from MLB API; status code: {StatusCode}",
+                failureStatusCode.ToString());
+        }
+
         _gameDetails = gameDetails;
 
-        switch (gameDetails.GameData.Status.Status)
+        if (!_isInitialLoad)
         {
-            case EMlbGameStatus.PreGame:
-                _logger.LogInformation("Game {GameId} is in pre-game", _gameId.ToString());
-                await Task.Delay(TimeSpan.FromMinutes(15));
-                return;
-            case EMlbGameStatus.Warmup:
-                _logger.LogInformation("Game {GameId} is warming up", _gameId.ToString());
-                await Task.Delay(TimeSpan.FromMinutes(5));
-                return;
-            case EMlbGameStatus.InProgress:
-                break;
-            default:
-                _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());
-                await Stop();
-                return;
+            switch (gameDetails.GameData.Status.Status)
+            {
+                case EMlbGameStatus.PreGame:
+                    _logger.LogInformation("Game {GameId} is in pre-game", _gameId.ToString());
+                    await Task.Delay(TimeSpan.FromMinutes(15));
+                    return;
+                case EMlbGameStatus.Warmup:
+                    _logger.LogInformation("Game {GameId} is warming up", _gameId.ToString());
+                    await Task.Delay(TimeSpan.FromMinutes(5));
+                    return;
+                case EMlbGameStatus.InProgress:
+                    break;
+                default:
+                    _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());
+                    await Stop();
+                    return;
+            }
         }
 
         var homeRuns = gameDetails.LiveData.Plays.AllPlays
@@ -94,6 +87,8 @@ public class GameGrain : Grain, IGameGrain
             .Select(ValidateHomeRun)
             .ToList();
         await Task.WhenAll(tasks);
+        
+        _isInitialLoad = false;
     }
 
     public async Task<MlbGameDetails> GetGame()

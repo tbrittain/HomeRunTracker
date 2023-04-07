@@ -1,6 +1,9 @@
-﻿using HomeRunTracker.Common.Models.Details;
+﻿using System.Net;
+using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Summary;
 using Newtonsoft.Json;
+using OneOf;
+using OneOf.Types;
 
 namespace HomeRunTracker.Backend.Services.HttpService;
 
@@ -15,7 +18,7 @@ public class HttpService : IHttpService
         _logger = logger;
     }
 
-    public async Task<MlbSchedule> FetchGames(DateTime dateTime)
+    public async Task<OneOf<MlbSchedule, HttpStatusCode, Error<string>>> FetchGames(DateTime dateTime)
     {
         var formattedDate = dateTime.ToString("yyyy-MM-dd");
         var url =
@@ -24,25 +27,17 @@ public class HttpService : IHttpService
         var httpClient = _httpClientFactory.CreateClient();
 
         var response = await httpClient.GetAsync(url);
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError("Failed to fetch games from MLB API; status code: {StatusCode}", response.StatusCode);
-            throw new Exception("Failed to fetch games from MLB API; status code: " + response.StatusCode);
-        }
+        if (!response.IsSuccessStatusCode) return response.StatusCode;
 
         var content = await response.Content.ReadAsStringAsync();
         var schedule = JsonConvert.DeserializeObject<MlbSchedule>(content);
 
-        if (schedule is null)
-        {
-            _logger.LogError("Failed to deserialize MLB API response");
-            throw new Exception("Failed to deserialize MLB API response");
-        }
-
-        return schedule;
+        if (schedule is not null) return schedule;
+        
+        return new Error<string>("Failed to deserialize MLB API response");
     }
 
-    public async Task<MlbGameDetails> FetchGameDetails(int gameId)
+    public async Task<OneOf<MlbGameDetails, HttpStatusCode, Error<string>>> FetchGameDetails(int gameId)
     {
         _logger.LogDebug("Fetching game data for game {GameId}", gameId.ToString());
         var url = $"https://statsapi.mlb.com/api/v1.1/game/{gameId}/feed/live";
@@ -50,21 +45,13 @@ public class HttpService : IHttpService
         var httpClient = _httpClientFactory.CreateClient();
 
         var response = await httpClient.GetAsync(url);
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError("Failed to fetch game data for game {GameId}", gameId.ToString());
-            throw new Exception($"Failed to fetch game data for game {gameId}");
-        }
+        if (!response.IsSuccessStatusCode) return response.StatusCode;
 
         var content = await response.Content.ReadAsStringAsync();
         var updatedGame = JsonConvert.DeserializeObject<MlbGameDetails>(content);
 
-        if (updatedGame is null)
-        {
-            _logger.LogError("Failed to deserialize game data for game {GameId}", gameId.ToString());
-            throw new Exception($"Failed to deserialize game data for game {gameId}");
-        }
-
-        return updatedGame;
+        if (updatedGame is not null) return updatedGame;
+        
+        return new Error<string>($"Failed to deserialize game data for game {gameId}");
     }
 }

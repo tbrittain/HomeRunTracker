@@ -1,5 +1,6 @@
 ﻿using HomeRunTracker.Backend.Grains;
 using HomeRunTracker.Backend.Services.HttpService;
+using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Summary;
 
 namespace HomeRunTracker.Backend.Services;
@@ -53,15 +54,20 @@ public class MlbApiPollingService : BackgroundService
         _logger.LogInformation("Stopping MLB API polling service");
     }
 
-    private Task<List<int>> FanOutGameGrainsAsync(List<MlbGameSummary> games)
+    private async Task<List<int>> FanOutGameGrainsAsync(List<MlbGameSummary> games)
     {
         _logger.LogInformation("Fanning out {Count} game grains", games.Count.ToString());
+        List<Task<MlbGameDetails>> initializedGameTasks = new();
         foreach (var game in games)
         {
-            _ = _grainFactory.GetGrain<IGameGrain>(game.Id);
+            var grain = _grainFactory.GetGrain<IGameGrain>(game.Id);
+            var task = grain.GetGameAsync();
+            initializedGameTasks.Add(task);
         }
+        
+        await Task.WhenAll(initializedGameTasks);
 
-        return Task.FromResult(games.Select(g => g.Id).ToList());
+        return initializedGameTasks.Select(t => t.Result.Id).ToList();
     }
 
     public void RemoveGame(int gameId)

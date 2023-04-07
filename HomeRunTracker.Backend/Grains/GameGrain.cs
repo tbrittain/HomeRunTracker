@@ -5,7 +5,6 @@ using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
 using HomeRunTracker.Common.Models.Summary;
 using MediatR;
-using Newtonsoft.Json;
 
 namespace HomeRunTracker.Backend.Grains;
 
@@ -34,12 +33,8 @@ public class GameGrain : Grain, IGameGrain
         _logger.LogInformation("Initializing game grain {GameId}", _gameId.ToString());
         
         await InitialFetchGameAsync();
-
-        if (_gameDetails.GameData.Status.Status is not EMlbGameStatus.Final)
-        {
-            RegisterTimer(PollGameAsync, null, TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(2));
-        }
-
+        RegisterTimer(PollGameAsync, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+        
         await base.OnActivateAsync(cancellationToken);
     }
 
@@ -69,6 +64,8 @@ public class GameGrain : Grain, IGameGrain
         _logger.LogDebug("Polling game {GameId}", _gameId.ToString());
 
         var gameDetails = await _httpService.FetchGameDetailsAsync(_gameId);
+        
+        _gameDetails = gameDetails;
 
         switch (gameDetails.GameData.Status.Status)
         {
@@ -79,6 +76,12 @@ public class GameGrain : Grain, IGameGrain
             case EMlbGameStatus.Warmup:
                 _logger.LogInformation("Game {GameId} is warming up", _gameId.ToString());
                 await Task.Delay(TimeSpan.FromMinutes(5));
+                return;
+            case EMlbGameStatus.InProgress:
+                break;
+            default:
+                _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());
+                await StopAsync();
                 return;
         }
 
@@ -91,15 +94,6 @@ public class GameGrain : Grain, IGameGrain
             .Select(ValidateHomeRun)
             .ToList();
         await Task.WhenAll(tasks);
-
-        if (gameDetails.GameData.Status.Status is not EMlbGameStatus.InProgress)
-        {
-            _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());
-            await StopAsync();
-            return;
-        }
-
-        _gameDetails = gameDetails;
     }
 
     public async Task<MlbGameDetails> GetGameAsync()

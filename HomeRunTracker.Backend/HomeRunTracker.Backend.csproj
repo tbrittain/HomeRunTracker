@@ -15,7 +15,7 @@
         <PackageReference Include="Microsoft.Orleans.OrleansProviders" Version="3.7.0" />
         <PackageReference Include="Microsoft.Orleans.Server" Version="7.1.1" />
         <PackageReference Include="OneOf" Version="3.0.243" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     </ItemGroup>
 
     <ItemGroup>

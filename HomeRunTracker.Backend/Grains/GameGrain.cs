@@ -1,22 +1,24 @@
 ﻿using System.Diagnostics;
 using HomeRunTracker.Backend.Services.HttpService;
 using HomeRunTracker.Common.Enums;
+using HomeRunTracker.Common.Models.Content;
 using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
-using HomeRunTracker.Common.Models.Summary;
 using MediatR;
 
 namespace HomeRunTracker.Backend.Grains;
 
+// ReSharper disable once UnusedType.Global
 public class GameGrain : Grain, IGameGrain
 {
     private readonly List<string> _homeRunHashes = new();
-    private readonly HashSet<MlbPlay> _homeRuns = new();
+    private readonly HashSet<HomeRunRecord> _homeRuns = new();
     private readonly IHttpService _httpService;
     private readonly ILogger<GameGrain> _logger;
     private readonly IMediator _mediator;
     private MlbGameDetails _gameDetails = new();
+    private MlbGameContent _gameContent = new();
     private int _gameId;
     private bool _isInitialLoad = true;
 
@@ -42,11 +44,14 @@ public class GameGrain : Grain, IGameGrain
     {
         _logger.LogDebug("Polling game {GameId}", _gameId.ToString());
 
-        var fetchGameDetailsResponse = await _httpService.FetchGameDetails(_gameId);
+        var fetchGameDetailsTask = _httpService.FetchGameDetails(_gameId);
+        var fetchGameContentTask = _httpService.FetchGameContent(_gameId);
+        
+        await Task.WhenAll(fetchGameDetailsTask, fetchGameContentTask);
 
-        if (fetchGameDetailsResponse.TryPickT2(out var error, out var rest))
+        if (fetchGameDetailsTask.Result.TryPickT2(out var error, out var rest))
         {
-            _logger.LogError("Failed to fetch games from MLB API: {Error}", error.Value);
+            _logger.LogError("Failed to fetch game details from MLB API: {Error}", error.Value);
         }
 
         if (rest.TryPickT1(out var failureStatusCode, out var gameDetails))
@@ -55,7 +60,19 @@ public class GameGrain : Grain, IGameGrain
                 failureStatusCode.ToString());
         }
 
+        if (fetchGameContentTask.Result.TryPickT2(out var error2, out var rest2))
+        {
+            _logger.LogError("Failed to fetch game content from MLB API: {Error}", error2.Value);
+        }
+        
+        if (rest2.TryPickT1(out var failureStatusCode2, out var gameContent))
+        {
+            _logger.LogError("Failed to fetch game content from MLB API; status code: {StatusCode}",
+                failureStatusCode2.ToString());
+        }
+
         _gameDetails = gameDetails;
+        _gameContent = gameContent;
 
         if (!_isInitialLoad)
         {
@@ -83,7 +100,13 @@ public class GameGrain : Grain, IGameGrain
             .ToList();
 
         var tasks = homeRuns
-            .Where(homeRun => !_homeRuns.Contains(homeRun))
+            .Where(homeRun =>
+            {
+                if (_isInitialLoad) return true;
+                
+                var hash = HomeRunRecord.GetHash(homeRun.Result.Description, _gameId);
+                return !_homeRunHashes.Contains(hash);
+            })
             .Select(ValidateHomeRun)
             .ToList();
         await Task.WhenAll(tasks);
@@ -112,18 +135,25 @@ public class GameGrain : Grain, IGameGrain
             return;
         }
 
-        var homeRunEvent = play.Events.Single(e => e.HitData is not null).HitData;
+        var homeRunEvent = play.Events.Single(e => e.HitData is not null);
         Debug.Assert(homeRunEvent != null, nameof(homeRunEvent) + " != null");
+
+        var highlightUrl = _gameContent.Highlights.Items
+            .SingleOrDefault(item => item.Guid is not null && item.Guid == homeRunEvent.PlayId)
+            ?.Playbacks.SingleOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
+            ?.Url;
 
         if (_homeRunHashes.Contains(descriptionHashString))
         {
+            // TODO: We are going to want to check here if we need to update the existing record
+            // with the new content match
+            
             _logger.LogDebug("Home run {Hash} has already been published", descriptionHashString);
             return;
         }
 
         _logger.LogInformation("Game {GameId} has a new home run with hash {Hash}", _gameId.ToString(),
             descriptionHashString);
-        _homeRuns.Add(play);
 
         var homeRunRecord = new HomeRunRecord
         {
@@ -134,15 +164,17 @@ public class GameGrain : Grain, IGameGrain
             BatterName = play.PlayerMatchup.Batter.FullName,
             Description = play.Result.Description,
             Rbi = play.Result.Rbi,
-            LaunchSpeed = homeRunEvent.LaunchSpeed,
-            LaunchAngle = homeRunEvent.LaunchAngle,
-            TotalDistance = homeRunEvent.TotalDistance,
+            LaunchSpeed = homeRunEvent.HitData!.LaunchSpeed,
+            LaunchAngle = homeRunEvent.HitData!.LaunchAngle,
+            TotalDistance = homeRunEvent.HitData!.TotalDistance,
             Inning = play.About.Inning,
             IsTopInning = play.About.IsTopInning,
             PitcherId = play.PlayerMatchup.Pitcher.Id,
-            PitcherName = play.PlayerMatchup.Pitcher.FullName
+            PitcherName = play.PlayerMatchup.Pitcher.FullName,
+            ContentUrl = highlightUrl
         };
 
+        _homeRuns.Add(homeRunRecord);
         await _mediator.Publish(new HomeRunNotification(_gameId, homeRunRecord));
         _homeRunHashes.Add(descriptionHashString);
     }

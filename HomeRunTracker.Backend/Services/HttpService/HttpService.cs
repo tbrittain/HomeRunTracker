@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using HomeRunTracker.Common.Models.Content;
 using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Summary;
 using Newtonsoft.Json;
@@ -53,5 +54,10 @@ public class HttpService : IHttpService
         if (updatedGame is not null) return updatedGame;
         
         return new Error<string>($"Failed to deserialize game data for game {gameId}");
+    }
+
+    public Task<OneOf<MlbGameContent, HttpStatusCode, Error<string>>> FetchGameContent(int gameId)
+    {
+        throw new NotImplementedException();
     }
 }

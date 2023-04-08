@@ -1,4 +1,4 @@
-﻿namespace HomeRunTracker.Common.Models.Details;
+﻿namespace HomeRunTracker.Common.Enums;
 
 public enum EPlayResult
 {

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using HomeRunTracker.Backend.Services.HttpService;
+using HomeRunTracker.Common.Enums;
 using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
@@ -15,7 +16,6 @@ public class GameGrain : Grain, IGameGrain
     private readonly IHttpService _httpService;
     private readonly ILogger<GameGrain> _logger;
     private readonly IMediator _mediator;
-    private string _gameContentLink = string.Empty; // TODO: use this, check #2
     private MlbGameDetails _gameDetails = new();
     private int _gameId;
     private bool _isInitialLoad = true;

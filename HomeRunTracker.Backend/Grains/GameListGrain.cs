@@ -2,6 +2,7 @@
 using HomeRunTracker.Backend.Hubs;
 using HomeRunTracker.Backend.Services;
 using HomeRunTracker.Backend.Services.HttpService;
+using HomeRunTracker.Common.Enums;
 using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;

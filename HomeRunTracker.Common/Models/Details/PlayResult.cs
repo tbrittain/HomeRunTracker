@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using HomeRunTracker.Common.Enums;
+using Newtonsoft.Json;
 
 namespace HomeRunTracker.Common.Models.Details;
 

@@ -61,6 +61,9 @@ public record HomeRunRecord
     [Id(17)]
     public string PitcherName { get; set; } = string.Empty;
 
+    [Id(18)]
+    public string ContentUrl { get; set; } = string.Empty;
+
     public static string GetHash(string description, int gameId)
     {
         var descriptionHash = MD5.HashData(Encoding.UTF8.GetBytes(description + gameId));

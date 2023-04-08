@@ -3,6 +3,7 @@ using HomeRunTracker.Backend.Hubs;
 using HomeRunTracker.Backend.Services;
 using HomeRunTracker.Backend.Services.HttpService;
 using HomeRunTracker.Common.Enums;
+using HomeRunTracker.Common.Models.Content;
 using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
@@ -65,14 +66,20 @@ public class GameListGrain : Grain, IGameListGrain
         foreach (var grain in gameGrains)
         {
             var game = await grain.GetGame();
+            var gameContent = await grain.GetGameContent();
 
             _logger.LogInformation("Getting home runs for game {GameId}", game.Id.ToString());
             var homeRuns = game.LiveData.Plays.AllPlays
                 .Where(p => p.Result.Result is EPlayResult.HomeRun)
                 .Select(play =>
                 {
-                    var homeRunEvent = play.Events.Single(e => e.HitData is not null).HitData;
+                    var homeRunEvent = play.Events.Single(e => e.HitData is not null);
                     Debug.Assert(homeRunEvent != null, nameof(homeRunEvent) + " != null");
+                    
+                    var highlightUrl = gameContent.Highlights.Items
+                        .SingleOrDefault(item => item.Guid is not null && item.Guid == homeRunEvent.PlayId)
+                        ?.Playbacks.SingleOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
+                        ?.Url;
 
                     return new HomeRunRecord
                     {
@@ -83,13 +90,14 @@ public class GameListGrain : Grain, IGameListGrain
                         BatterName = play.PlayerMatchup.Batter.FullName,
                         Description = play.Result.Description,
                         Rbi = play.Result.Rbi,
-                        LaunchSpeed = homeRunEvent.LaunchSpeed,
-                        LaunchAngle = homeRunEvent.LaunchAngle,
-                        TotalDistance = homeRunEvent.TotalDistance,
+                        LaunchSpeed = homeRunEvent.HitData!.LaunchSpeed,
+                        LaunchAngle = homeRunEvent.HitData!.LaunchAngle,
+                        TotalDistance = homeRunEvent.HitData!.TotalDistance,
                         Inning = play.About.Inning,
                         IsTopInning = play.About.IsTopInning,
                         PitcherId = play.PlayerMatchup.Pitcher.Id,
                         PitcherName = play.PlayerMatchup.Pitcher.FullName,
+                        HighlightUrl = highlightUrl
                     };
                 })
                 .ToList();

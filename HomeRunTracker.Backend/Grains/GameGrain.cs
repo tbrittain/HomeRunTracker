@@ -119,6 +119,11 @@ public class GameGrain : Grain, IGameGrain
         return await Task.FromResult(_gameDetails);
     }
 
+    public Task<MlbGameContent> GetGameContent()
+    {
+        return Task.FromResult(_gameContent);
+    }
+
     public async Task Stop()
     {
         _logger.LogInformation("Stopping game grain {GameId}", _gameId.ToString());
@@ -171,7 +176,7 @@ public class GameGrain : Grain, IGameGrain
             IsTopInning = play.About.IsTopInning,
             PitcherId = play.PlayerMatchup.Pitcher.Id,
             PitcherName = play.PlayerMatchup.Pitcher.FullName,
-            ContentUrl = highlightUrl
+            HighlightUrl = highlightUrl
         };
 
         _homeRuns.Add(homeRunRecord);

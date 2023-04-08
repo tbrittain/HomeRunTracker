@@ -62,7 +62,7 @@ public record HomeRunRecord
     public string PitcherName { get; set; } = string.Empty;
 
     [Id(18)]
-    public string? ContentUrl { get; set; } = string.Empty;
+    public string? HighlightUrl { get; set; } = string.Empty;
 
     public static string GetHash(string description, int gameId)
     {

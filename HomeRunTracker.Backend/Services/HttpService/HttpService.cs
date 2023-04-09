@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using HomeRunTracker.Common.Models.Content;
 using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Summary;
 using Newtonsoft.Json;
@@ -48,10 +49,28 @@ public class HttpService : IHttpService
         if (!response.IsSuccessStatusCode) return response.StatusCode;
 
         var content = await response.Content.ReadAsStringAsync();
-        var updatedGame = JsonConvert.DeserializeObject<MlbGameDetails>(content);
+        var game = JsonConvert.DeserializeObject<MlbGameDetails>(content);
 
-        if (updatedGame is not null) return updatedGame;
+        if (game is not null) return game;
         
         return new Error<string>($"Failed to deserialize game data for game {gameId}");
+    }
+
+    public async Task<OneOf<MlbGameContent, HttpStatusCode, Error<string>>> FetchGameContent(int gameId)
+    {
+        _logger.LogDebug("Fetching game content for game {GameId}", gameId.ToString());
+        var url = $"https://statsapi.mlb.com/api/v1/game/{gameId}/content";
+        
+        var httpClient = _httpClientFactory.CreateClient();
+        
+        var response = await httpClient.GetAsync(url);
+        if (!response.IsSuccessStatusCode) return response.StatusCode;
+        
+        var content = await response.Content.ReadAsStringAsync();
+        var gameContent = JsonConvert.DeserializeObject<MlbGameContent>(content);
+        
+        if (gameContent is not null) return gameContent;
+        
+        return new Error<string>($"Failed to deserialize game content for game {gameId}");
     }
 }

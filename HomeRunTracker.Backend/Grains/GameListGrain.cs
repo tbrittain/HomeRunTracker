@@ -76,8 +76,8 @@ public class GameListGrain : Grain, IGameListGrain
                     Debug.Assert(homeRunEvent != null, nameof(homeRunEvent) + " != null");
 
                     var highlightUrl = gameContent.HighlightsOverview.Highlights.Items
-                        .SingleOrDefault(item => item.Guid is not null && item.Guid == homeRunEvent.PlayId)
-                        ?.Playbacks.SingleOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
+                        .FirstOrDefault(item => item.Guid is not null && item.Guid == homeRunEvent.PlayId)
+                        ?.Playbacks.FirstOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
                         ?.Url;
 
                     return new HomeRunRecord

@@ -141,7 +141,7 @@ public class GameGrain : Grain, IGameGrain
         }
 
         var homeRunEvent = play.Events.Single(e => e.HitData is not null);
-        Debug.Assert(homeRunEvent != null, nameof(homeRunEvent) + " != null");
+        Debug.Assert(homeRunEvent is not null, nameof(homeRunEvent) + " is not null");
 
         var highlightUrl = _gameContent.Highlights.Items
             .SingleOrDefault(item => item.Guid is not null && item.Guid == homeRunEvent.PlayId)
@@ -150,10 +150,15 @@ public class GameGrain : Grain, IGameGrain
 
         if (_homeRunHashes.Contains(descriptionHashString))
         {
-            // TODO: We are going to want to check here if we need to update the existing record
-            // with the new content match
-            
             _logger.LogDebug("Home run {Hash} has already been published", descriptionHashString);
+
+            var existingHomeRun = _homeRuns.Single(hr => hr.Hash == descriptionHashString);
+            if (highlightUrl is null || existingHomeRun.HighlightUrl == highlightUrl) return;
+
+            _logger.LogInformation("Home run {Hash} has a new highlight URL", descriptionHashString);
+            existingHomeRun.HighlightUrl = highlightUrl;
+            await _mediator.Publish(new HomeRunUpdatedNotification(descriptionHashString, _gameId, highlightUrl));
+
             return;
         }
 

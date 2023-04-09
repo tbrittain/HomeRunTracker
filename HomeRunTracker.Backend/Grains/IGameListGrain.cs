@@ -8,4 +8,5 @@ public interface IGameListGrain : IGrainWithIntegerKey
     Task<List<HomeRunRecord>> GetHomeRuns(DateTime dateTime);
     
     Task PublishHomeRun(HomeRunNotification notification);
+    Task PublishHomeRunUpdated(HomeRunUpdatedNotification notification);
 }

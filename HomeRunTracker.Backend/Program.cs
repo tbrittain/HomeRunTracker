@@ -35,6 +35,7 @@ builder.Services.AddSignalR();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 builder.Services.AddScoped<INotificationHandler<GameStoppedNotification>, GameRemovedHandler>();
 builder.Services.AddScoped<INotificationHandler<HomeRunNotification>, HomeRunHandler>();
+builder.Services.AddScoped<INotificationHandler<HomeRunUpdatedNotification>, HomeRunUpdatedHandler>();
 builder.Services.AddSingleton<IHttpService, HttpService>();
 builder.Services.AddSingleton<MlbCurrentDayGamePollingService>();
 builder.Services.AddHostedService<MlbCurrentDayGamePollingService>(p => p.GetRequiredService<MlbCurrentDayGamePollingService>());

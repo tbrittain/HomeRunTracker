@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using HomeRunTracker.Common.Enums;
+using Newtonsoft.Json;
 
 namespace HomeRunTracker.Common.Models.Content;
 
@@ -19,11 +20,4 @@ public class HighlightPlayback
         "highBit" => EPlaybackType.HighBit,
         _ => EPlaybackType.Unknown
     };
-}
-
-public enum EPlaybackType
-{
-    Unknown,
-    Mp4,
-    HighBit
 }

@@ -3,8 +3,6 @@ using HomeRunTracker.Backend.Hubs;
 using HomeRunTracker.Backend.Services;
 using HomeRunTracker.Backend.Services.HttpService;
 using HomeRunTracker.Common.Enums;
-using HomeRunTracker.Common.Models.Content;
-using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
 using Microsoft.AspNetCore.SignalR;
@@ -75,7 +73,7 @@ public class GameListGrain : Grain, IGameListGrain
                 {
                     var homeRunEvent = play.Events.Single(e => e.HitData is not null);
                     Debug.Assert(homeRunEvent != null, nameof(homeRunEvent) + " != null");
-                    
+
                     var highlightUrl = gameContent.Highlights.Items
                         .SingleOrDefault(item => item.Guid is not null && item.Guid == homeRunEvent.PlayId)
                         ?.Playbacks.SingleOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
@@ -113,8 +111,21 @@ public class GameListGrain : Grain, IGameListGrain
     {
         _logger.LogInformation("Publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
             notification.GameId.ToString());
+
         await _hubContext.Clients.All.SendAsync("ReceiveHomeRun", JsonConvert.SerializeObject(notification.HomeRun));
+
         _logger.LogInformation("Finished publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
+            notification.GameId.ToString());
+    }
+
+    public async Task PublishHomeRunUpdated(HomeRunUpdatedNotification notification)
+    {
+        _logger.LogInformation("Publishing home run modified {Hash} for game {GameId}", notification.HomeRunHash,
+            notification.GameId.ToString());
+        
+        await _hubContext.Clients.All.SendAsync("UpdateHomeRun", JsonConvert.SerializeObject(notification));
+        
+        _logger.LogInformation("Finished publishing home run modified {Hash} for game {GameId}", notification.HomeRunHash,
             notification.GameId.ToString());
     }
 }

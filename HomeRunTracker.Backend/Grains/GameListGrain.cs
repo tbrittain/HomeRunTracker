@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 
 namespace HomeRunTracker.Backend.Grains;
 
+// ReSharper disable once UnusedType.Global
 public class GameListGrain : Grain, IGameListGrain
 {
     private readonly IClusterClient _clusterClient;
@@ -35,7 +36,7 @@ public class GameListGrain : Grain, IGameListGrain
         if (pollingService is null)
             throw new InvalidOperationException("MlbApiPollingService not found");
 
-        var fetchGamesResponse = await _httpService.FetchGames(DateTime.Now);
+        var fetchGamesResponse = await _httpService.FetchGames(dateTime);
 
         if (fetchGamesResponse.TryPickT2(out var error, out var rest))
         {
@@ -74,7 +75,7 @@ public class GameListGrain : Grain, IGameListGrain
                     var homeRunEvent = play.Events.Single(e => e.HitData is not null);
                     Debug.Assert(homeRunEvent != null, nameof(homeRunEvent) + " != null");
 
-                    var highlightUrl = gameContent.Highlights.Items
+                    var highlightUrl = gameContent.HighlightsOverview.Highlights.Items
                         .SingleOrDefault(item => item.Guid is not null && item.Guid == homeRunEvent.PlayId)
                         ?.Playbacks.SingleOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
                         ?.Url;

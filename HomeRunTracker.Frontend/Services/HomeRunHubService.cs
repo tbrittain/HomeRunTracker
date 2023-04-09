@@ -1,4 +1,5 @@
 ﻿using HomeRunTracker.Common.Models.Internal;
+using HomeRunTracker.Common.Models.Notifications;
 using Microsoft.AspNetCore.SignalR.Client;
 using Newtonsoft.Json;
 
@@ -33,7 +34,20 @@ public class HomeRunHubService
 
             OnHomeRunReceived?.Invoke(homeRun);
         });
+
+        _hubConnection.On<string>("UpdateHomeRun", json =>
+        {
+            var notification = JsonConvert.DeserializeObject<HomeRunUpdatedNotification>(json);
+            if (notification is null)
+            {
+                throw new InvalidOperationException("Home run update notification is null");
+            }
+            
+            OnHomeRunUpdated?.Invoke(notification);
+        });
     }
-    
+
     public event Func<HomeRunRecord, Task>? OnHomeRunReceived;
+    
+    public event Func<HomeRunUpdatedNotification, Task>? OnHomeRunUpdated;
 }

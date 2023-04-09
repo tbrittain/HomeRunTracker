@@ -1,5 +1,6 @@
 ﻿@using HomeRunTracker.Frontend.Services.HttpService
 @using HomeRunTracker.Common.Models.Internal
+@using HomeRunTracker.Common.Models.Notifications
 @using HomeRunTracker.Frontend.Services
 @inject IHttpService HttpService
 @inject HomeRunHubService HomeRunHubService
@@ -14,6 +15,7 @@
         <th>Date</th>
         <th>RBI</th>
         <th>Description</th>
+        <th>Video</th>
     </tr>
     </thead>
     <tbody>
@@ -27,7 +29,7 @@
             <td>@record.DateTime.ToString("T")</td>
             <td>@record.Rbi</td>
             <td>@record.Description</td>
-            <td></td>
+            <td><a href="@record.HighlightUrl" target="_blank">Link</a></td>
         </tr>
     }
     </tbody>
@@ -44,7 +46,16 @@
         // Subscribe to the hub to receive new home runs
         await HomeRunHubService.StartHubConnection();
         HomeRunHubService.OnHomeRunReceived += OnHomeRunReceived;
+        HomeRunHubService.OnHomeRunUpdated += OnHomeRunUpdated;
         HomeRunHubService.SubscribeToHubMethods();
+    }
+
+    private async Task OnHomeRunUpdated(HomeRunUpdatedNotification arg)
+    {
+        var homeRun = _homeRuns.Single(_ => _.Hash == arg.HomeRunHash);
+
+        homeRun.HighlightUrl = arg.HighlightUrl;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnHomeRunReceived(HomeRunRecord homeRun)

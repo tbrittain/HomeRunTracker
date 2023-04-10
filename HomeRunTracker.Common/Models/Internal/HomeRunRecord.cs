@@ -64,7 +64,7 @@ public record HomeRunRecord
     [Id(18)]
     public string? HighlightUrl { get; set; } = string.Empty;
 
-    [Id(19)]
+    // ReSharper disable once UnusedMember.Global
     public string BatterImageUrl =>
         $"https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_100,q_auto:best/v1/people/{BatterId}/headshot/67/current";
 

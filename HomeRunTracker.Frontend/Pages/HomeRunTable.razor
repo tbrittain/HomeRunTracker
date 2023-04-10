@@ -14,57 +14,36 @@
 }
 else
 {
-    <table>
-        <thead>
-        <tr>
-            <th>Batter Name</th>
-            <th>Distance</th>
-            <th>Launch Angle</th>
-            <th>Launch Speed</th>
-            <th>Date</th>
-            <th>RBI</th>
-            <th>Description</th>
-            <th>Video</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var record in _homeRuns)
-        {
-            <tr>
-                <td>@record.BatterName</td>
-                <td>@record.TotalDistance.ToString(CultureInfo.CurrentCulture)</td>
-                <td>@record.LaunchAngle.ToString(CultureInfo.CurrentCulture)</td>
-                <td>@record.LaunchSpeed.ToString(CultureInfo.CurrentCulture)</td>
-                <td>@record.DateTime.ToString("T")</td>
-                <td>@record.Rbi.ToString(CultureInfo.CurrentCulture)</td>
-                <td>@record.Description</td>
-                <td>
-                    @if (record.HighlightUrl is not null)
-                    {
-                        <a href="@record.HighlightUrl" target="_blank">Link</a>
-                    }
-                    else
-                    {
-                        <span>Not Available</span>
-                    }
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
+    <QuickGrid Items="@_items" ResizableColumns="true">
+        <PropertyColumn Title="Name" Property="@(c => c.BatterName)" Sortable="true" />
+        <PropertyColumn Title="Total Distance" Property="@(c => c.TotalDistance)" Sortable="true" IsDefaultSort="SortDirection.Descending" />
+        <PropertyColumn Title="Launch Angle" Property="@(c => c.LaunchAngle)" Sortable="true" />
+        <PropertyColumn Title="Exit Velocity" Property="@(c => c.LaunchSpeed)" Sortable="true" />
+        <PropertyColumn Title="Time" Property="@(c => c.DateTime)" Format="T" Sortable="true" />
+        <PropertyColumn Title="RBI" Property="@(c => c.Rbi)" Sortable="true" />
+        <PropertyColumn Title="Description" Property="@(c => c.Description)" Sortable="false" />
+        <TemplateColumn>
+            <td>
+                @if (!string.IsNullOrEmpty(@context.HighlightUrl))
+                {
+                    <a href="@context.HighlightUrl" target="_blank">Link</a>
+                }
+                else
+                {
+                    <span>Not available</span>
+                }
+            </td>
+        </TemplateColumn>
+    </QuickGrid>
 }
 
 @code {
+    private IQueryable<HomeRunRecord> _items = null!;
     private List<HomeRunRecord> _homeRuns = new();
-    private DateTime _dateTime;
     private bool _isLoading;
 
     [Parameter]
-    public DateTime DateTime
-    {
-        get => _dateTime;
-        set => _dateTime = value;
-    }
+    public DateTime DateTime { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -74,15 +53,18 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        _homeRuns.Clear();
         _isLoading = true;
         await InvokeAsync(StateHasChanged);
-        
-        _homeRuns = (await HttpService.GetHomeRunsAsync(DateTime == DateTime.Today ? null : DateTime.Date))
-            .OrderByDescending(hr => hr.TotalDistance)
-            .ToList();
+
+        _homeRuns.Clear();
+        _items = new List<HomeRunRecord>().AsQueryable();
+
+        _homeRuns = await HttpService.GetHomeRunsAsync(DateTime == DateTime.Today ? null : DateTime.Date);
+        _items = _homeRuns.AsQueryable();
+
         _isLoading = false;
-        
+        await InvokeAsync(StateHasChanged);
+
         if (DateTime.Date != DateTime.Today)
         {
             HomeRunHubService.OnHomeRunReceived -= OnHomeRunReceived;
@@ -100,16 +82,17 @@ else
     private async Task OnHomeRunUpdated(HomeRunUpdatedNotification arg)
     {
         var homeRun = _homeRuns.Single(_ => _.Hash == arg.HomeRunHash);
-
         homeRun.HighlightUrl = arg.HighlightUrl;
+
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnHomeRunReceived(HomeRunRecord homeRun)
     {
-        _homeRuns = _homeRuns.Append(homeRun)
-            .OrderByDescending(hr => hr.TotalDistance)
-            .ToList();
+        _homeRuns = _homeRuns.Append(homeRun).ToList();
+        _items = _homeRuns.AsQueryable();
+
         await InvokeAsync(StateHasChanged);
     }
+
 }

@@ -11,5 +11,5 @@ public class HighlightItem
 
     [JsonProperty("playbacks")]
     [Id(1)]
-    public List<HighlightPlayback> Playbacks { get; set; }
+    public List<HighlightPlayback> Playbacks { get; set; } = new();
 }

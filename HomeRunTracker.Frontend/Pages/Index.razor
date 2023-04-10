@@ -1,23 +1,23 @@
 ﻿@page "/"
 @inject NavigationManager NavigationManager
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Home Run Tracker: @Date.ToString("D")</PageTitle>
 
-<div>
-    <div style="display: flex; flex-direction: row">
-        <button @onclick="RemoveDay">
+<div class="bg-black">
+    <div class="flex-row d-flex justify-content-center">
+        <button @onclick="RemoveDay" class="btn-primary p-2 m-2">
             Previous day
         </button>
         
-        <div>
+        <h2 class="p-3 m-2">
             @Date.ToString("D")
-        </div>
+        </h2>
         
-        <button @onclick="AddDay" disabled="@_isDateGreaterOrEqualToToday">
+        <button @onclick="AddDay" disabled="@_isDateGreaterOrEqualToToday" class="btn-primary p-2 m-2">
             Next day
         </button>
         
-        <button @onclick="GoToToday">
+        <button @onclick="GoToToday" class="btn-primary p-2 m-2">
             Today
         </button>
     </div>

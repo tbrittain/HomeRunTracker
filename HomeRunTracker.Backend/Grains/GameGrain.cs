@@ -47,7 +47,7 @@ public class GameGrain : Grain, IGameGrain
 
         var fetchGameDetailsTask = _httpService.FetchGameDetails(_gameId);
         var fetchGameContentTask = _httpService.FetchGameContent(_gameId);
-        
+
         await Task.WhenAll(fetchGameDetailsTask, fetchGameContentTask);
 
         if (fetchGameDetailsTask.Result.TryPickT2(out var error, out var rest))
@@ -65,7 +65,7 @@ public class GameGrain : Grain, IGameGrain
         {
             _logger.LogError("Failed to fetch game content from MLB API: {Error}", error2.Value);
         }
-        
+
         if (rest2.TryPickT1(out var failureStatusCode2, out var gameContent))
         {
             _logger.LogError("Failed to fetch game content from MLB API; status code: {StatusCode}",
@@ -104,14 +104,14 @@ public class GameGrain : Grain, IGameGrain
             .Where(homeRun =>
             {
                 if (_isInitialLoad) return true;
-                
+
                 var hash = HomeRunRecord.GetHash(homeRun.Result.Description, _gameId);
                 return !HomeRunHashes.Contains(hash);
             })
             .Select(ValidateHomeRun)
             .ToList();
         await Task.WhenAll(tasks);
-        
+
         _isInitialLoad = false;
     }
 
@@ -166,6 +166,8 @@ public class GameGrain : Grain, IGameGrain
         _logger.LogInformation("Game {GameId} has a new home run with hash {Hash}", _gameId.ToString(),
             descriptionHashString);
 
+        var (batterTeamId, pitcherTeamId, batterTeamName, pitcherTeamName, isTopInning) = GetPlayerTeams(play);
+
         var homeRunRecord = new HomeRunRecord
         {
             Hash = descriptionHashString,
@@ -179,10 +181,14 @@ public class GameGrain : Grain, IGameGrain
             LaunchAngle = homeRunEvent.HitData!.LaunchAngle,
             TotalDistance = homeRunEvent.HitData!.TotalDistance,
             Inning = play.About.Inning,
-            IsTopInning = play.About.IsTopInning,
+            IsTopInning = isTopInning,
             PitcherId = play.PlayerMatchup.Pitcher.Id,
             PitcherName = play.PlayerMatchup.Pitcher.FullName,
-            HighlightUrl = highlightUrl
+            HighlightUrl = highlightUrl,
+            TeamId = batterTeamId,
+            TeamName = batterTeamName,
+            TeamNameAgainstId = pitcherTeamId,
+            TeamNameAgainst = pitcherTeamName
         };
 
         _homeRuns.Add(homeRunRecord);
@@ -190,5 +196,32 @@ public class GameGrain : Grain, IGameGrain
         {
             await _mediator.Publish(new HomeRunNotification(_gameId, homeRunRecord));
         }
+    }
+
+    private (int batterTeamId, int pitcherTeamId, string batterTeamName, string pitcherTeamName, bool isTopInning)
+        GetPlayerTeams(MlbPlay play)
+    {
+        int batterTeamId, pitcherTeamId;
+        string batterTeamName, pitcherTeamName;
+        var isTopInning = play.About.IsTopInning;
+
+        if (isTopInning)
+        {
+            batterTeamId = _gameDetails.GameData.TeamMatchup.AwayTeam.Id;
+            batterTeamName = _gameDetails.GameData.TeamMatchup.AwayTeam.Name;
+
+            pitcherTeamId = _gameDetails.GameData.TeamMatchup.HomeTeam.Id;
+            pitcherTeamName = _gameDetails.GameData.TeamMatchup.HomeTeam.Name;
+        }
+        else
+        {
+            batterTeamId = _gameDetails.GameData.TeamMatchup.HomeTeam.Id;
+            batterTeamName = _gameDetails.GameData.TeamMatchup.HomeTeam.Name;
+
+            pitcherTeamId = _gameDetails.GameData.TeamMatchup.AwayTeam.Id;
+            pitcherTeamName = _gameDetails.GameData.TeamMatchup.AwayTeam.Name;
+        }
+
+        return (batterTeamId, pitcherTeamId, batterTeamName, pitcherTeamName, isTopInning);
     }
 }

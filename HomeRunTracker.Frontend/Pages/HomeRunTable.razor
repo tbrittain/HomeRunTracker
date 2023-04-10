@@ -16,11 +16,12 @@ else
 {
     <QuickGrid Items="@_items" ResizableColumns="true">
         <TemplateColumn>
-            <td>
-                <img src="@context.BatterImageUrl" alt="@context.BatterName" width="30" style="border-radius: 15px" />
-            </td>
+            <img src="@context.BatterImageUrl" alt="@context.BatterName" width="30" style="border-radius: 15px" />
         </TemplateColumn>
         <PropertyColumn Title="Name" Property="@(c => c.BatterName)" Sortable="true"/>
+        <TemplateColumn Title="Team" Sortable="true" SortBy="_sort">
+            <img src="@context.BatterTeamImageUrl" alt="@context.TeamName" width="30" style="border-radius: 100%"/>
+        </TemplateColumn>
         <PropertyColumn Title="Total Distance" Property="@(c => c.TotalDistance)" Sortable="true" IsDefaultSort="SortDirection.Descending"/>
         <PropertyColumn Title="Launch Angle" Property="@(c => c.LaunchAngle)" Sortable="true"/>
         <PropertyColumn Title="Exit Velocity" Property="@(c => c.LaunchSpeed)" Sortable="true"/>
@@ -46,6 +47,8 @@ else
     private IQueryable<HomeRunRecord> _items = null!;
     private List<HomeRunRecord> _homeRuns = new();
     private bool _isLoading;
+    
+    GridSort<HomeRunRecord> _sort = GridSort<HomeRunRecord>.ByAscending(x => x.TeamName);
 
     [Parameter]
     public DateTime DateTime { get; set; }

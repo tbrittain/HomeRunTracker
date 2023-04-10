@@ -12,7 +12,6 @@ namespace HomeRunTracker.Backend.Grains;
 // ReSharper disable once UnusedType.Global
 public class GameGrain : Grain, IGameGrain
 {
-    private readonly List<string> _homeRunHashes = new();
     private readonly HashSet<HomeRunRecord> _homeRuns = new();
     private readonly IHttpService _httpService;
     private readonly ILogger<GameGrain> _logger;
@@ -28,6 +27,8 @@ public class GameGrain : Grain, IGameGrain
         _mediator = mediator;
         _httpService = httpService;
     }
+
+    private List<string> HomeRunHashes => _homeRuns.Select(x => x.Hash).ToList();
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
@@ -105,7 +106,7 @@ public class GameGrain : Grain, IGameGrain
                 if (_isInitialLoad) return true;
                 
                 var hash = HomeRunRecord.GetHash(homeRun.Result.Description, _gameId);
-                return !_homeRunHashes.Contains(hash);
+                return !HomeRunHashes.Contains(hash);
             })
             .Select(ValidateHomeRun)
             .ToList();
@@ -116,12 +117,8 @@ public class GameGrain : Grain, IGameGrain
 
     public async Task<MlbGameDetails> GetGame()
     {
+        _logger.LogInformation("Getting game details for game {GameId}", _gameId.ToString());
         return await Task.FromResult(_gameDetails);
-    }
-
-    public Task<MlbGameContent> GetGameContent()
-    {
-        return Task.FromResult(_gameContent);
     }
 
     public async Task Stop()
@@ -131,14 +128,15 @@ public class GameGrain : Grain, IGameGrain
         await _mediator.Publish(new GameStoppedNotification(_gameId));
     }
 
+    public Task<List<HomeRunRecord>> GetHomeRuns()
+    {
+        _logger.LogInformation("Getting home runs for game {GameId}", _gameId.ToString());
+        return Task.FromResult(_homeRuns.ToList());
+    }
+
     private async Task ValidateHomeRun(MlbPlay play)
     {
         var descriptionHashString = HomeRunRecord.GetHash(play.Result.Description, _gameId);
-        if (_isInitialLoad)
-        {
-            _homeRunHashes.Add(descriptionHashString);
-            return;
-        }
 
         var homeRunEvent = play.Events.Single(e => e.HitData is not null);
         Debug.Assert(homeRunEvent is not null, nameof(homeRunEvent) + " is not null");
@@ -148,7 +146,7 @@ public class GameGrain : Grain, IGameGrain
             ?.Playbacks.FirstOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
             ?.Url;
 
-        if (_homeRunHashes.Contains(descriptionHashString))
+        if (HomeRunHashes.Contains(descriptionHashString))
         {
             _logger.LogDebug("Home run {Hash} has already been published", descriptionHashString);
 
@@ -157,7 +155,10 @@ public class GameGrain : Grain, IGameGrain
 
             _logger.LogInformation("Home run {Hash} has a new highlight URL", descriptionHashString);
             existingHomeRun.HighlightUrl = highlightUrl;
-            await _mediator.Publish(new HomeRunUpdatedNotification(descriptionHashString, _gameId, highlightUrl));
+            if (!_isInitialLoad)
+            {
+                await _mediator.Publish(new HomeRunUpdatedNotification(descriptionHashString, _gameId, highlightUrl));
+            }
 
             return;
         }
@@ -185,7 +186,9 @@ public class GameGrain : Grain, IGameGrain
         };
 
         _homeRuns.Add(homeRunRecord);
-        await _mediator.Publish(new HomeRunNotification(_gameId, homeRunRecord));
-        _homeRunHashes.Add(descriptionHashString);
+        if (!_isInitialLoad)
+        {
+            await _mediator.Publish(new HomeRunNotification(_gameId, homeRunRecord));
+        }
     }
 }

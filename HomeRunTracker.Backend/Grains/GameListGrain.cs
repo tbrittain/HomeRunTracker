@@ -1,8 +1,6 @@
-﻿using System.Diagnostics;
-using HomeRunTracker.Backend.Hubs;
+﻿using HomeRunTracker.Backend.Hubs;
 using HomeRunTracker.Backend.Services;
 using HomeRunTracker.Backend.Services.HttpService;
-using HomeRunTracker.Common.Enums;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
 using Microsoft.AspNetCore.SignalR;
@@ -61,48 +59,15 @@ public class GameListGrain : Grain, IGameListGrain
             .Select(id => _clusterClient.GetGrain<IGameGrain>(id))
             .ToList();
 
-        var allHomeRuns = new List<HomeRunRecord>();
-        foreach (var grain in gameGrains)
-        {
-            var game = await grain.GetGame();
-            var gameContent = await grain.GetGameContent();
+        var tasks = gameGrains
+            .Select(grain => grain.GetHomeRuns())
+            .ToList();
 
-            _logger.LogInformation("Getting home runs for game {GameId}", game.Id.ToString());
-            var homeRuns = game.LiveData.Plays.AllPlays
-                .Where(p => p.Result.Result is EPlayResult.HomeRun)
-                .Select(play =>
-                {
-                    var homeRunEvent = play.Events.Single(e => e.HitData is not null);
-                    Debug.Assert(homeRunEvent != null, nameof(homeRunEvent) + " != null");
+        await Task.WhenAll(tasks);
 
-                    var highlightUrl = gameContent.HighlightsOverview.Highlights.Items
-                        .SingleOrDefault(item => item.Guid is not null && item.Guid == homeRunEvent.PlayId)
-                        ?.Playbacks.SingleOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
-                        ?.Url;
-
-                    return new HomeRunRecord
-                    {
-                        Hash = HomeRunRecord.GetHash(play.Result.Description, game.Id),
-                        GameId = game.Id,
-                        DateTime = play.DateTime,
-                        BatterId = play.PlayerMatchup.Batter.Id,
-                        BatterName = play.PlayerMatchup.Batter.FullName,
-                        Description = play.Result.Description,
-                        Rbi = play.Result.Rbi,
-                        LaunchSpeed = homeRunEvent.HitData!.LaunchSpeed,
-                        LaunchAngle = homeRunEvent.HitData!.LaunchAngle,
-                        TotalDistance = homeRunEvent.HitData!.TotalDistance,
-                        Inning = play.About.Inning,
-                        IsTopInning = play.About.IsTopInning,
-                        PitcherId = play.PlayerMatchup.Pitcher.Id,
-                        PitcherName = play.PlayerMatchup.Pitcher.FullName,
-                        HighlightUrl = highlightUrl
-                    };
-                })
-                .ToList();
-
-            allHomeRuns.AddRange(homeRuns);
-        }
+        var allHomeRuns = tasks
+            .SelectMany(x => x.Result)
+            .ToList();
 
         _logger.LogInformation("Returning {HomeRunCount} home runs", allHomeRuns.Count.ToString());
         return allHomeRuns;

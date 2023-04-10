@@ -12,12 +12,16 @@ public class HttpService : IHttpService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<List<HomeRunRecord>> GetHomeRunsAsync()
+    public async Task<List<HomeRunRecord>> GetHomeRunsAsync(DateTime? dateTime)
     {
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri("http://localhost:5001");
-        
-        var response = await httpClient.GetAsync("/api/home-runs");
+
+        var endpoint = dateTime.HasValue
+            ? $"/api/home-runs?date={dateTime.Value:yyyy-MM-dd}"
+            : "/api/home-runs";
+
+        var response = await httpClient.GetAsync(endpoint);
         response.EnsureSuccessStatusCode();
         
         var content = await response.Content.ReadAsStringAsync();

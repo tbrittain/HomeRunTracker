@@ -2,52 +2,99 @@
 @using HomeRunTracker.Common.Models.Internal
 @using HomeRunTracker.Common.Models.Notifications
 @using HomeRunTracker.Frontend.Services
+@using System.Globalization
 @inject IHttpService HttpService
 @inject HomeRunHubService HomeRunHubService
 
-<table>
-    <thead>
-    <tr>
-        <th>Batter Name</th>
-        <th>Distance</th>
-        <th>Launch Angle</th>
-        <th>Launch Speed</th>
-        <th>Date</th>
-        <th>RBI</th>
-        <th>Description</th>
-        <th>Video</th>
-    </tr>
-    </thead>
-    <tbody>
-    @foreach (var record in _homeRuns)
-    {
+@if (_isLoading)
+{
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+}
+else
+{
+    <table>
+        <thead>
         <tr>
-            <td>@record.BatterName</td>
-            <td>@record.TotalDistance</td>
-            <td>@record.LaunchAngle</td>
-            <td>@record.LaunchSpeed</td>
-            <td>@record.DateTime.ToString("T")</td>
-            <td>@record.Rbi</td>
-            <td>@record.Description</td>
-            <td><a href="@record.HighlightUrl" target="_blank">Link</a></td>
+            <th>Batter Name</th>
+            <th>Distance</th>
+            <th>Launch Angle</th>
+            <th>Launch Speed</th>
+            <th>Date</th>
+            <th>RBI</th>
+            <th>Description</th>
+            <th>Video</th>
         </tr>
-    }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+        @foreach (var record in _homeRuns)
+        {
+            <tr>
+                <td>@record.BatterName</td>
+                <td>@record.TotalDistance.ToString(CultureInfo.CurrentCulture)</td>
+                <td>@record.LaunchAngle.ToString(CultureInfo.CurrentCulture)</td>
+                <td>@record.LaunchSpeed.ToString(CultureInfo.CurrentCulture)</td>
+                <td>@record.DateTime.ToString("T")</td>
+                <td>@record.Rbi.ToString(CultureInfo.CurrentCulture)</td>
+                <td>@record.Description</td>
+                <td>
+                    @if (record.HighlightUrl is not null)
+                    {
+                        <a href="@record.HighlightUrl" target="_blank">Link</a>
+                    }
+                    else
+                    {
+                        <span>Not Available</span>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
 
 @code {
     private List<HomeRunRecord> _homeRuns = new();
+    private DateTime _dateTime;
+    private bool _isLoading;
+
+    [Parameter]
+    public DateTime DateTime
+    {
+        get => _dateTime;
+        set => _dateTime = value;
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        // Get home runs that have already been recorded
-        _homeRuns = await HttpService.GetHomeRunsAsync();
-
-        // Subscribe to the hub to receive new home runs
         await HomeRunHubService.StartHubConnection();
-        HomeRunHubService.OnHomeRunReceived += OnHomeRunReceived;
-        HomeRunHubService.OnHomeRunUpdated += OnHomeRunUpdated;
         HomeRunHubService.SubscribeToHubMethods();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _homeRuns.Clear();
+        _isLoading = true;
+        await InvokeAsync(StateHasChanged);
+        
+        _homeRuns = (await HttpService.GetHomeRunsAsync(DateTime == DateTime.Today ? null : DateTime.Date))
+            .OrderByDescending(hr => hr.TotalDistance)
+            .ToList();
+        _isLoading = false;
+        
+        if (DateTime.Date != DateTime.Today)
+        {
+            HomeRunHubService.OnHomeRunReceived -= OnHomeRunReceived;
+            HomeRunHubService.OnHomeRunUpdated -= OnHomeRunUpdated;
+        }
+        else
+        {
+            HomeRunHubService.OnHomeRunReceived += OnHomeRunReceived;
+            HomeRunHubService.OnHomeRunUpdated += OnHomeRunUpdated;
+        }
+
+        await base.OnParametersSetAsync();
     }
 
     private async Task OnHomeRunUpdated(HomeRunUpdatedNotification arg)

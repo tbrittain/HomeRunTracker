@@ -36,7 +36,7 @@ public class GameGrain : Grain, IGameGrain
         _logger.LogInformation("Initializing game grain {GameId}", _gameId.ToString());
 
         await PollGame(new object());
-        RegisterTimer(PollGame, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+        RegisterTimer(PollGame, null, TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(5));
 
         await base.OnActivateAsync(cancellationToken);
     }
@@ -124,6 +124,7 @@ public class GameGrain : Grain, IGameGrain
     public async Task Stop()
     {
         _logger.LogInformation("Stopping game grain {GameId}", _gameId.ToString());
+        if (_isInitialLoad) return;
         DeactivateOnIdle();
         await _mediator.Publish(new GameStoppedNotification(_gameId));
     }

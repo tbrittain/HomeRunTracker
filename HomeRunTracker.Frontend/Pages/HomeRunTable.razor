@@ -47,7 +47,7 @@ else
 
 @code {
     private IQueryable<HomeRunRecord> _items = null!;
-    private List<HomeRunRecord> _homeRuns = new();
+    private HashSet<HomeRunRecord> _homeRuns = new();
     private bool _isLoading;
 
     GridSort<HomeRunRecord> _sort = GridSort<HomeRunRecord>.ByAscending(x => x.TeamName);
@@ -69,7 +69,8 @@ else
         _homeRuns.Clear();
         _items = new List<HomeRunRecord>().AsQueryable();
 
-        _homeRuns = await HttpService.GetHomeRunsAsync(DateTime == DateTime.Today ? null : DateTime.Date);
+        var homeRuns = await HttpService.GetHomeRunsAsync(DateTime == DateTime.Today ? null : DateTime.Date);
+        _homeRuns = homeRuns.ToHashSet();
         _items = _homeRuns.AsQueryable();
 
         _isLoading = false;
@@ -99,7 +100,7 @@ else
 
     private async Task OnHomeRunReceived(HomeRunRecord homeRun)
     {
-        _homeRuns = _homeRuns.Append(homeRun).ToList();
+        _homeRuns.Add(homeRun);
         _items = _homeRuns.AsQueryable();
 
         await InvokeAsync(StateHasChanged);

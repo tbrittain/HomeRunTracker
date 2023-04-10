@@ -42,7 +42,6 @@ public record HomeRunRecord
     [Id(11)]
     public bool IsTopInning { get; set; }
 
-    // TODO: Handle getting the teams, as the team players come back as a list of player objects with dynamic key names
     [Id(12)]
     public string TeamName { get; set; } = string.Empty;
 
@@ -67,6 +66,9 @@ public record HomeRunRecord
     // ReSharper disable once UnusedMember.Global
     public string BatterImageUrl =>
         $"https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_100,q_auto:best/v1/people/{BatterId}/headshot/67/current";
+
+    // ReSharper disable once UnusedMember.Global
+    public string BatterTeamImageUrl => $"https://midfield.mlbstatic.com/v1/team/{TeamId}/spots/72";
 
     public static string GetHash(string description, int gameId)
     {

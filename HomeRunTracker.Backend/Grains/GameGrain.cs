@@ -141,7 +141,7 @@ public class GameGrain : Grain, IGameGrain
         var homeRunEvent = play.Events.Single(e => e.HitData is not null);
         Debug.Assert(homeRunEvent is not null, nameof(homeRunEvent) + " is not null");
 
-        var highlightUrl = _gameContent.HighlightsOverview.Highlights.Items
+        var highlightUrl = (_gameContent.HighlightsOverview?.Highlights?.Items ?? new List<HighlightItem>())
             .FirstOrDefault(item => item.Guid is not null && item.Guid == homeRunEvent.PlayId)
             ?.Playbacks.FirstOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
             ?.Url;

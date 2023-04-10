@@ -8,15 +8,17 @@
 
 @if (_isLoading)
 {
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+    <div class="flex-row d-flex justify-content-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
     </div>
 }
 else
 {
-    <QuickGrid Items="@_items" ResizableColumns="true">
+    <QuickGrid Items="@_items" ResizableColumns="true" class="table bg-black text-light">
         <TemplateColumn>
-            <img src="@context.BatterImageUrl" alt="@context.BatterName" width="30" style="border-radius: 15px" />
+            <img src="@context.BatterImageUrl" alt="@context.BatterName" width="30" style="border-radius: 15px"/>
         </TemplateColumn>
         <PropertyColumn Title="Name" Property="@(c => c.BatterName)" Sortable="true"/>
         <TemplateColumn Title="Team" Sortable="true" SortBy="_sort">
@@ -47,7 +49,7 @@ else
     private IQueryable<HomeRunRecord> _items = null!;
     private List<HomeRunRecord> _homeRuns = new();
     private bool _isLoading;
-    
+
     GridSort<HomeRunRecord> _sort = GridSort<HomeRunRecord>.ByAscending(x => x.TeamName);
 
     [Parameter]

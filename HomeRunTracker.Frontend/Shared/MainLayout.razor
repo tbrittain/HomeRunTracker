@@ -4,8 +4,19 @@
 
 <div class="page">
     <main>
-        <article class="content px-4">
+        <article class="content px-4 bg-black">
             @Body
         </article>
     </main>
+    <footer class="footer mt-auto py-3 bg-black">
+        <div class="container">
+            <span class="text-muted">© @_dateTime.ToString("yyyy") <a href="@Url" target="_blank">Trey Brittain</a></span>
+        </div>
+    </footer>
 </div>
+
+@code
+{
+    private readonly DateTime _dateTime = DateTime.Today;
+    private const string Url = "https://www.tbrittain.com/";
+}

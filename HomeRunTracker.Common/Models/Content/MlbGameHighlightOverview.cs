@@ -7,7 +7,7 @@ public class MlbGameHighlightOverview
 {
     [JsonProperty("highlights")]
     [Id(0)]
-    public MlbGameHighlight Highlights { get; set; }
+    public MlbGameHighlight? Highlights { get; set; }
 }
 
 [GenerateSerializer]
@@ -15,5 +15,5 @@ public class MlbGameHighlight
 {
     [JsonProperty("items")]
     [Id(0)]
-    public List<HighlightItem> Items { get; set; }
+    public List<HighlightItem> Items { get; set; } = new();
 }

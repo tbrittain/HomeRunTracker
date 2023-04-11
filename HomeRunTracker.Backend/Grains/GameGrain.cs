@@ -167,7 +167,8 @@ public class GameGrain : Grain, IGameGrain
         _logger.LogInformation("Game {GameId} has a new home run with hash {Hash}", _gameId.ToString(),
             descriptionHashString);
 
-        var (batterTeamId, pitcherTeamId, batterTeamName, pitcherTeamName, isTopInning) = GetPlayerTeams(play);
+        var (batterTeamId, pitcherTeamId, batterTeamName, pitcherTeamName, isTopInning) =
+            new PlayTeams(play, _gameDetails);
 
         var homeRunRecord = new HomeRunRecord
         {
@@ -197,32 +198,5 @@ public class GameGrain : Grain, IGameGrain
         {
             await _mediator.Publish(new HomeRunNotification(_gameId, homeRunRecord));
         }
-    }
-
-    private (int batterTeamId, int pitcherTeamId, string batterTeamName, string pitcherTeamName, bool isTopInning)
-        GetPlayerTeams(MlbPlay play)
-    {
-        int batterTeamId, pitcherTeamId;
-        string batterTeamName, pitcherTeamName;
-        var isTopInning = play.About.IsTopInning;
-
-        if (isTopInning)
-        {
-            batterTeamId = _gameDetails.GameData.TeamMatchup.AwayTeam.Id;
-            batterTeamName = _gameDetails.GameData.TeamMatchup.AwayTeam.Name;
-
-            pitcherTeamId = _gameDetails.GameData.TeamMatchup.HomeTeam.Id;
-            pitcherTeamName = _gameDetails.GameData.TeamMatchup.HomeTeam.Name;
-        }
-        else
-        {
-            batterTeamId = _gameDetails.GameData.TeamMatchup.HomeTeam.Id;
-            batterTeamName = _gameDetails.GameData.TeamMatchup.HomeTeam.Name;
-
-            pitcherTeamId = _gameDetails.GameData.TeamMatchup.AwayTeam.Id;
-            pitcherTeamName = _gameDetails.GameData.TeamMatchup.AwayTeam.Name;
-        }
-
-        return (batterTeamId, pitcherTeamId, batterTeamName, pitcherTeamName, isTopInning);
     }
 }

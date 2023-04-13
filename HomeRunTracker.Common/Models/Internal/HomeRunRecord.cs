@@ -62,14 +62,7 @@ public record HomeRunRecord
 
     [Id(18)]
     public string? HighlightUrl { get; set; } = string.Empty;
-
-    // ReSharper disable once UnusedMember.Global
-    public string BatterImageUrl =>
-        $"https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_100,q_auto:best/v1/people/{BatterId}/headshot/67/current";
-
-    // ReSharper disable once UnusedMember.Global
-    public string BatterTeamImageUrl => $"https://midfield.mlbstatic.com/v1/team/{TeamId}/spots/72";
-
+    
     public static string GetHash(string description, int gameId)
     {
         var descriptionHash = MD5.HashData(Encoding.UTF8.GetBytes(description + gameId));

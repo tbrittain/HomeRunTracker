@@ -1,0 +1,71 @@
+﻿@using HomeRunTracker.Frontend.Services.HttpService
+@using HomeRunTracker.Frontend.Services
+@inject IHttpService HttpService
+@inject HomeRunHubService HomeRunHubService
+
+<div>
+    @if (_isLoading)
+    {
+        <div class="flex-row d-flex justify-content-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+
+    <QuickGrid Items="@_items" ResizableColumns="true" class="table bg-black text-light">
+        <TemplateColumn>
+            <img src="@context.BatterImageUrl" alt="@context.BatterName" width="30" style="border-radius: 15px"/>
+        </TemplateColumn>
+        <PropertyColumn Title="Name" Property="@(c => c.BatterName)" Sortable="true"/>
+        <TemplateColumn Title="Team" Sortable="true" SortBy="_teamSort">
+            <img src="@context.BatterTeamImageUrl" alt="@context.TeamName" width="30" style="border-radius: 100%"/>
+        </TemplateColumn>
+        <TemplateColumn
+            Title="Total Distance"
+            Sortable="true"
+            SortBy="@_distanceSort"
+            IsDefaultSort="SortDirection.Descending">
+            <div
+                style="text-align: center;"
+                class="fw-bold">
+                <p style="color: @context.DistanceColor">@context.FormattedDistance</p>
+            </div>
+        </TemplateColumn>
+        <TemplateColumn
+            Title="Launch Angle"
+            Sortable="true"
+            SortBy="@_launchAngleSort">
+            <div
+                style="text-align: center;"
+                class="fw-bold">
+                <p style="color: @context.LaunchAngleColor">@context.FormattedLaunchAngle</p>
+            </div>
+        </TemplateColumn>
+        <TemplateColumn
+            Title="Exit Velocity"
+            Sortable="true"
+            SortBy="@_exitVelocitySort">
+            <div
+                style="text-align: center;"
+                class="fw-bold">
+                <p style="color: @context.LaunchSpeedColor">@context.FormattedLaunchSpeed</p>
+            </div>
+        </TemplateColumn>
+        <PropertyColumn Title="Time" Property="@(c => c.DateTime)" Format="h:mm tt" Sortable="true"/>
+        <PropertyColumn Title="RBI" Property="@(c => c.Rbi)" Sortable="true"/>
+        <PropertyColumn Title="Description" Property="@(c => c.Description)" Sortable="false"/>
+        <TemplateColumn>
+            <td>
+                @if (!string.IsNullOrEmpty(@context.HighlightUrl))
+                {
+                    <a href="@context.HighlightUrl" target="_blank">Link</a>
+                }
+                else
+                {
+                    <span>Not available</span>
+                }
+            </td>
+        </TemplateColumn>
+    </QuickGrid>
+</div>

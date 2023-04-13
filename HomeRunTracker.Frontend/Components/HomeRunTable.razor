@@ -3,16 +3,16 @@
 @inject IHttpService HttpService
 @inject HomeRunHubService HomeRunHubService
 
-@if (_isLoading)
-{
-    <div class="flex-row d-flex justify-content-center">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+<div>
+    @if (_isLoading)
+    {
+        <div class="flex-row d-flex justify-content-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
         </div>
-    </div>
-}
-else
-{
+    }
+
     <QuickGrid Items="@_items" ResizableColumns="true" class="table bg-black text-light">
         <TemplateColumn>
             <img src="@context.BatterImageUrl" alt="@context.BatterName" width="30" style="border-radius: 15px"/>
@@ -29,7 +29,7 @@ else
             <div
                 style="text-align: center;"
                 class="fw-bold">
-                <p style="color: @GetColorForDistance(@context.TotalDistance).ToString()">@context.TotalDistance</p>
+                <p style="color: @context.DistanceColor">@context.FormattedDistance</p>
             </div>
         </TemplateColumn>
 
@@ -51,4 +51,4 @@ else
             </td>
         </TemplateColumn>
     </QuickGrid>
-}
+</div>

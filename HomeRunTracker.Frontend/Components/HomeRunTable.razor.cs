@@ -1,5 +1,7 @@
 ﻿using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
+using HomeRunTracker.Frontend.Models;
+using Mapster;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.QuickGrid;
 
@@ -7,11 +9,11 @@ namespace HomeRunTracker.Frontend.Components;
 
 public partial class HomeRunTable
 {
-    private IQueryable<HomeRunRecord> _items = null!;
-    private HashSet<HomeRunRecord> _homeRuns = new();
+    private IQueryable<HomeRunModel> _items = null!;
+    private HashSet<HomeRunModel> _homeRuns = new();
     private bool _isLoading;
-    private readonly GridSort<HomeRunRecord> _teamSort = GridSort<HomeRunRecord>.ByAscending(x => x.TeamName);
-    private readonly GridSort<HomeRunRecord> _distanceSort = GridSort<HomeRunRecord>.ByAscending(x => x.TotalDistance);
+    private readonly GridSort<HomeRunModel> _teamSort = GridSort<HomeRunModel>.ByAscending(x => x.TeamName);
+    private readonly GridSort<HomeRunModel> _distanceSort = GridSort<HomeRunModel>.ByAscending(x => x.TotalDistance);
 
     [Parameter] public DateTime DateTime { get; set; }
 
@@ -27,9 +29,11 @@ public partial class HomeRunTable
         await InvokeAsync(StateHasChanged);
 
         _homeRuns.Clear();
-        _items = new List<HomeRunRecord>().AsQueryable();
+        _items = new List<HomeRunModel>().AsQueryable();
 
-        var homeRuns = await HttpService.GetHomeRunsAsync(DateTime == DateTime.Today ? null : DateTime.Date);
+        var homeRunDtos = await HttpService.GetHomeRunsAsync(DateTime == DateTime.Today ? null : DateTime.Date);
+        var homeRuns = homeRunDtos
+            .Select(x => x.Adapt<HomeRunModel>()).ToList();
         _homeRuns = homeRuns.ToHashSet();
         _items = _homeRuns.AsQueryable();
 
@@ -58,48 +62,12 @@ public partial class HomeRunTable
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task OnHomeRunReceived(HomeRunRecord homeRun)
+    private async Task OnHomeRunReceived(HomeRunRecord homeRunDto)
     {
+        var homeRun = homeRunDto.Adapt<HomeRunModel>();
         _homeRuns.Add(homeRun);
         _items = _homeRuns.AsQueryable();
 
         await InvokeAsync(StateHasChanged);
-    }
-
-    private record RgbColor(int R, int G, int B)
-    {
-        public override string ToString()
-        {
-            return $"rgb({R}, {G}, {B})";
-        }
-    }
-
-    private static RgbColor GetColorForDistance(double distance)
-    {
-        switch (distance)
-        {
-            case 400:
-                return new RgbColor(255, 255, 255);
-            case < 350:
-                return new RgbColor(0, 0, 255);
-            case > 450:
-                return new RgbColor(255, 0, 0);
-            case < 400:
-            {
-                var percent = (distance - 350) / 50.0;
-                var r = (int) (255 * percent);
-                var g = (int) (255 * percent);
-                return new RgbColor(r, g, 255);
-            }
-            case > 400:
-            {
-                var percent = (distance - 400) / 50.0;
-                var g = (int) (255 * (1 - percent));
-                var b = (int) (255 * (1 - percent));
-                return new RgbColor(255, g, b);
-            }
-            default:
-                return new RgbColor(0, 0, 0);
-        }
     }
 }

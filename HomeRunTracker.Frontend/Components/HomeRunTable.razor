@@ -18,10 +18,21 @@ else
             <img src="@context.BatterImageUrl" alt="@context.BatterName" width="30" style="border-radius: 15px"/>
         </TemplateColumn>
         <PropertyColumn Title="Name" Property="@(c => c.BatterName)" Sortable="true"/>
-        <TemplateColumn Title="Team" Sortable="true" SortBy="_sort">
+        <TemplateColumn Title="Team" Sortable="true" SortBy="_teamSort">
             <img src="@context.BatterTeamImageUrl" alt="@context.TeamName" width="30" style="border-radius: 100%"/>
         </TemplateColumn>
-        <PropertyColumn Title="Total Distance" Property="@(c => c.TotalDistance)" Sortable="true" IsDefaultSort="SortDirection.Descending"/>
+        <TemplateColumn
+            Title="Total Distance"
+            Sortable="true"
+            SortBy="@_distanceSort"
+            IsDefaultSort="SortDirection.Descending">
+            <div
+                style="text-align: center;"
+                class="fw-bold">
+                <p style="color: @GetColorForDistance(@context.TotalDistance).ToString()">@context.TotalDistance</p>
+            </div>
+        </TemplateColumn>
+
         <PropertyColumn Title="Launch Angle" Property="@(c => c.LaunchAngle)" Sortable="true"/>
         <PropertyColumn Title="Exit Velocity" Property="@(c => c.LaunchSpeed)" Sortable="true"/>
         <PropertyColumn Title="Time" Property="@(c => c.DateTime)" Format="T" Sortable="true"/>

@@ -14,8 +14,10 @@ public partial class HomeRunTable
     private bool _isLoading;
     private readonly GridSort<HomeRunModel> _teamSort = GridSort<HomeRunModel>.ByAscending(x => x.TeamName);
     private readonly GridSort<HomeRunModel> _distanceSort = GridSort<HomeRunModel>.ByAscending(x => x.TotalDistance);
+    private readonly GridSort<HomeRunModel> _exitVelocitySort = GridSort<HomeRunModel>.ByDescending(x => x.LaunchSpeed);
 
-    [Parameter] public DateTime DateTime { get; set; }
+    [Parameter]
+    public DateTime DateTime { get; set; }
 
     protected override async Task OnInitializedAsync()
     {

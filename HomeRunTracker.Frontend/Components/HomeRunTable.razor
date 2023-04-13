@@ -34,7 +34,16 @@
         </TemplateColumn>
 
         <PropertyColumn Title="Launch Angle" Property="@(c => c.LaunchAngle)" Sortable="true"/>
-        <PropertyColumn Title="Exit Velocity" Property="@(c => c.LaunchSpeed)" Sortable="true"/>
+        <TemplateColumn
+            Title="Exit Velocity"
+            Sortable="true"
+            SortBy="@_exitVelocitySort">
+            <div
+                style="text-align: center;"
+                class="fw-bold">
+                <p style="color: @context.LaunchSpeedColor">@context.FormattedLaunchSpeed</p>
+            </div>
+        </TemplateColumn>
         <PropertyColumn Title="Time" Property="@(c => c.DateTime)" Format="T" Sortable="true"/>
         <PropertyColumn Title="RBI" Property="@(c => c.Rbi)" Sortable="true"/>
         <PropertyColumn Title="Description" Property="@(c => c.Description)" Sortable="false"/>

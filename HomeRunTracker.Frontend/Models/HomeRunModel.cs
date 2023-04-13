@@ -75,8 +75,34 @@ public class HomeRunModel
             return sb.ToString();
         }
     }
+
+    public string FormattedLaunchSpeed
+    {
+        get
+        {
+            var sb = new StringBuilder();
+            sb.Append(LaunchSpeed);
+
+            switch (LaunchSpeed)
+            {
+                case > 116:
+                    sb.Append(" 🔥🔥🔥");
+                    break;
+                case > 113:
+                    sb.Append(" 🔥🔥");
+                    break;
+                case > 110:
+                    sb.Append(" 🔥");
+                    break;
+            }
+
+            return sb.ToString();
+        }
+    }
     
     public string DistanceColor => GetColorForDistance(TotalDistance).ToString();
+
+    public string LaunchSpeedColor => GetColorForLaunchSpeed(LaunchSpeed).ToString();
     
     private readonly record struct RgbColor(int R, int G, int B)
     {
@@ -99,19 +125,34 @@ public class HomeRunModel
             case < 400:
             {
                 var percent = (distance - 350) / 50.0;
-                var r = (int) (255 * percent);
-                var g = (int) (255 * percent);
-                return new RgbColor(r, g, 255);
+                var whiteness = (int) (255 * percent);
+                return new RgbColor(whiteness, whiteness, 255);
             }
             case > 400:
             {
                 var percent = (distance - 400) / 50.0;
-                var g = (int) (255 * (1 - percent));
-                var b = (int) (255 * (1 - percent));
-                return new RgbColor(255, g, b);
+                var whiteness = (int) (255 * (1 - percent));
+                return new RgbColor(255, whiteness, whiteness);
             }
             default:
                 return new RgbColor(0, 0, 0);
+        }
+    }
+    
+    private static RgbColor GetColorForLaunchSpeed(double speed)
+    {
+        switch (speed)
+        {
+            case <= 100:
+                return new RgbColor(255, 255, 255);
+            case >= 110:
+                return new RgbColor(255, 0, 0);
+            default:
+            {
+                var percent = (speed - 100) / 10;
+                var whiteness = (int) (255 * (1 - percent));
+                return new RgbColor(255, whiteness, whiteness);
+            }
         }
     }
 }

@@ -8,43 +8,43 @@ namespace HomeRunTracker.Frontend.Models;
 public class HomeRunModel
 {
     public string Hash { get; set; } = string.Empty;
-    
+
     public int GameId { get; set; }
-    
+
     public DateTime DateTime { get; set; }
-    
+
     public int BatterId { get; set; }
-    
+
     public string BatterName { get; set; } = string.Empty;
-    
+
     public string Description { get; set; } = string.Empty;
-    
+
     public int Rbi { get; set; }
-    
+
     public double LaunchSpeed { get; set; }
-    
+
     public double LaunchAngle { get; set; }
-    
+
     public double TotalDistance { get; set; }
-    
+
     public int Inning { get; set; }
-    
+
     public bool IsTopInning { get; set; }
-    
+
     public string TeamName { get; set; } = string.Empty;
-    
+
     public int TeamId { get; set; }
-    
+
     public string TeamNameAgainst { get; set; } = string.Empty;
-    
+
     public int TeamNameAgainstId { get; set; }
-    
+
     public int PitcherId { get; set; }
-    
+
     public string PitcherName { get; set; } = string.Empty;
-    
+
     public string? HighlightUrl { get; set; }
-    
+
     // ReSharper disable once UnusedMember.Global
     public string BatterImageUrl =>
         $"https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_100,q_auto:best/v1/people/{BatterId}/headshot/67/current";
@@ -58,6 +58,7 @@ public class HomeRunModel
         {
             var sb = new StringBuilder();
             sb.Append(TotalDistance);
+            sb.Append(" ft");
 
             switch (TotalDistance)
             {
@@ -82,6 +83,7 @@ public class HomeRunModel
         {
             var sb = new StringBuilder();
             sb.Append(LaunchSpeed);
+            sb.Append(" mph");
 
             switch (LaunchSpeed)
             {
@@ -99,11 +101,25 @@ public class HomeRunModel
             return sb.ToString();
         }
     }
-    
+
+    public string FormattedLaunchAngle
+    {
+        get
+        {
+            var sb = new StringBuilder();
+            sb.Append(LaunchAngle);
+            sb.Append('°');
+
+            return sb.ToString();
+        }
+    }
+
     public string DistanceColor => GetColorForDistance(TotalDistance).ToString();
 
     public string LaunchSpeedColor => GetColorForLaunchSpeed(LaunchSpeed).ToString();
-    
+
+    public string LaunchAngleColor => GetColorForLaunchAngle(LaunchAngle).ToString();
+
     private readonly record struct RgbColor(int R, int G, int B)
     {
         public override string ToString()
@@ -138,21 +154,55 @@ public class HomeRunModel
                 return new RgbColor(0, 0, 0);
         }
     }
-    
+
     private static RgbColor GetColorForLaunchSpeed(double speed)
     {
-        switch (speed)
+        var roundedSpeed = (int) Math.Round(speed);
+        switch (roundedSpeed)
         {
-            case <= 100:
+            case <= 90:
+                return new RgbColor(0, 0, 255);
+            case 100:
                 return new RgbColor(255, 255, 255);
             case >= 110:
                 return new RgbColor(255, 0, 0);
-            default:
+            case > 100 and < 110:
             {
                 var percent = (speed - 100) / 10;
                 var whiteness = (int) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
+            case > 90 and < 100:
+            {
+                var percent = (speed - 90) / 10;
+                var whiteness = (int) (255 * percent);
+                return new RgbColor(whiteness, whiteness, 255);
+            }
+        }
+    }
+
+    private static RgbColor GetColorForLaunchAngle(double angle)
+    {
+        switch (angle)
+        {
+            case 28:
+                return new RgbColor(255, 0, 0);
+            case <= 24 or >= 32:
+                return new RgbColor(255, 255, 255);
+            case < 28:
+            {
+                var percent = (angle - 24) / 4;
+                var whiteness = (int) (255 * (1 - percent));
+                return new RgbColor(255, whiteness, whiteness);
+            }
+            case > 28:
+            {
+                var percent = (angle - 28) / 4;
+                var whiteness = (int) (255 * (1 - percent));
+                return new RgbColor(255, whiteness, whiteness);
+            }
+            default:
+                return new RgbColor(0, 0, 0);
         }
     }
 }

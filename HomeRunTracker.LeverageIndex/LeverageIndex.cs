@@ -1,11 +1,11 @@
 ﻿using System.Collections.Immutable;
+using CommunityToolkit.Diagnostics;
 
 namespace HomeRunTracker.LeverageIndex;
 
-internal static class LeverageIndex
+public static class LeverageIndex
 {
-    internal static
-        ImmutableDictionary<(byte inning, bool isTopOfInning, sbyte outs, int runnerPositions, sbyte
+    private static readonly ImmutableDictionary<(byte inning, bool isTopOfInning, sbyte outs, int runnerPositions, sbyte
             homeTeamRunDifference), float>
         Indices = ImmutableDictionary
             .Create<(byte inning, bool isTopOfInning, sbyte OutAttribute, int runnerPositions, sbyte
@@ -108,8 +108,35 @@ internal static class LeverageIndex
             .Add((1, false, 2, 0x100, 0), 0.8f);
     // TODO: pick up here with the rest of the table
 
-    public static float GetLeverageIndex(byte inning, bool isTopOfInning, bool runnerOnFirst, bool runnerOnSecond, bool runnerOnThird, sbyte homeTeamRunDifference)
+    public static float GetLeverageIndex(byte inning, bool isTopOfInning, sbyte outs, bool runnerOnFirst, bool runnerOnSecond,
+        bool runnerOnThird, sbyte homeTeamRunDifference)
     {
+        Guard.IsInRange(inning, (byte) 1, (byte) 9, nameof(inning));
+        Guard.IsInRange(outs, (sbyte) 0, (sbyte) 2, nameof(outs));
+
+        if (homeTeamRunDifference is > 4 or < -4)
+        {
+            return 0.0f;
+        }
+
+        var baseState = 0;
+        if (runnerOnFirst) {
+            baseState |= 1 << 2;
+        }
+        if (runnerOnSecond) {
+            baseState |= 1 << 1;
+        }
+        if (runnerOnThird) {
+            baseState |= 1;
+        }
+        
+        var tuple = (inning, isTopOfInning, outs, baseState, homeTeamRunDifference);
+        if (Indices.TryGetValue(tuple, out var leverageIndex))
+        {
+            return leverageIndex;
+        }
+
         return 0.0f;
+        // throw new ArgumentException($"No leverage index found for tuple {tuple}");
     }
 }

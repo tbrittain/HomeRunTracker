@@ -5,6 +5,7 @@ using HomeRunTracker.Common.Models.Content;
 using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
+using HomeRunTracker.Common.Utils;
 using MediatR;
 
 namespace HomeRunTracker.Backend.Grains;
@@ -190,7 +191,8 @@ public class GameGrain : Grain, IGameGrain
             TeamId = batterTeamId,
             TeamName = batterTeamName,
             TeamNameAgainstId = pitcherTeamId,
-            TeamNameAgainst = pitcherTeamName
+            TeamNameAgainst = pitcherTeamName,
+            LeverageIndex = Common.Utils.LeverageIndex.GetLeverageIndex(play)
         };
 
         _homeRuns.Add(homeRunRecord);

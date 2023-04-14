@@ -5,10 +5,10 @@ namespace HomeRunTracker.LeverageIndex;
 
 public static class LeverageIndex
 {
-    private static readonly ImmutableDictionary<(byte inning, bool isTopOfInning, sbyte outs, int runnerPositions, sbyte
+    private static readonly ImmutableDictionary<(byte inning, bool isTopOfInning, byte outs, int runnerPositions, sbyte
             homeTeamRunDifference), float>
         Indices = ImmutableDictionary
-            .Create<(byte inning, bool isTopOfInning, sbyte OutAttribute, int runnerPositions, sbyte
+            .Create<(byte inning, bool isTopOfInning, byte outs, int runnerPositions, sbyte
                 homeTeamRunDifference), float>()
             // Top of 1st
             // 0 outs
@@ -108,11 +108,12 @@ public static class LeverageIndex
             .Add((1, false, 2, 0x100, 0), 0.8f);
     // TODO: pick up here with the rest of the table
 
-    public static float GetLeverageIndex(byte inning, bool isTopOfInning, sbyte outs, bool runnerOnFirst, bool runnerOnSecond,
-        bool runnerOnThird, sbyte homeTeamRunDifference)
+    public static float GetLeverageIndex(int inning, bool isTopOfInning, int outs, bool runnerOnFirst, bool runnerOnSecond,
+        bool runnerOnThird, int homeTeamRunDifference)
     {
-        Guard.IsInRange(inning, (byte) 1, (byte) 9, nameof(inning));
-        Guard.IsInRange(outs, (sbyte) 0, (sbyte) 2, nameof(outs));
+        Guard.IsInRange(inning, 1, 9, nameof(inning));
+        Guard.IsInRange(outs, 0, 2, nameof(outs));
+        Guard.IsInRange(homeTeamRunDifference, -50, 50, nameof(homeTeamRunDifference));
 
         if (homeTeamRunDifference is > 4 or < -4)
         {
@@ -130,7 +131,7 @@ public static class LeverageIndex
             baseState |= 1;
         }
         
-        var tuple = (inning, isTopOfInning, outs, baseState, homeTeamRunDifference);
+        var tuple = ((byte)inning, isTopOfInning, (byte)outs, baseState, (sbyte) homeTeamRunDifference);
         if (Indices.TryGetValue(tuple, out var leverageIndex))
         {
             return leverageIndex;

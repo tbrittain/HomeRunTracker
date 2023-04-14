@@ -30,4 +30,12 @@ public record PlayResult
         "home_run" => EPlayResult.HomeRun,
         _ => EPlayResult.Unknown
     };
+    
+    [JsonProperty("awayScore")]
+    [Id(3)]
+    public int AwayScore { get; set; }
+    
+    [JsonProperty("homeScore")]
+    [Id(4)]
+    public int HomeScore { get; set; }
 }

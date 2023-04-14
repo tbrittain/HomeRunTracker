@@ -26,14 +26,8 @@ public record MlbPlay
     [JsonProperty("about")]
     [Id(4)]
     public MlbPlayAbout About { get; set; } = new();
-}
-
-[GenerateSerializer]
-public class MlbPlayAbout
-{
-    [Id(0)]
-    public int Inning { get; set; }
-
-    [Id(1)]
-    public bool IsTopInning { get; set; }
+    
+    [JsonProperty("runners")]
+    [Id(5)]
+    public List<MlbPlayRunner> Runners { get; set; } = new();
 }

@@ -120,7 +120,7 @@ public class HomeRunModel
 
     public string LaunchAngleColor => GetColorForLaunchAngle(LaunchAngle).ToString();
 
-    private readonly record struct RgbColor(int R, int G, int B)
+    private readonly record struct RgbColor(byte R, byte G, byte B)
     {
         public override string ToString()
         {
@@ -141,13 +141,13 @@ public class HomeRunModel
             case < 400:
             {
                 var percent = (distance - 350) / 50.0;
-                var whiteness = (int) (255 * percent);
+                var whiteness = (byte) (255 * percent);
                 return new RgbColor(whiteness, whiteness, 255);
             }
             case > 400:
             {
                 var percent = (distance - 400) / 50.0;
-                var whiteness = (int) (255 * (1 - percent));
+                var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
             default:
@@ -169,13 +169,13 @@ public class HomeRunModel
             case > 100 and < 110:
             {
                 var percent = (speed - 100) / 10;
-                var whiteness = (int) (255 * (1 - percent));
+                var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
             case > 90 and < 100:
             {
                 var percent = (speed - 90) / 10;
-                var whiteness = (int) (255 * percent);
+                var whiteness = (byte) (255 * percent);
                 return new RgbColor(whiteness, whiteness, 255);
             }
         }
@@ -192,13 +192,13 @@ public class HomeRunModel
             case < 28:
             {
                 var percent = (angle - 24) / 4;
-                var whiteness = (int) (255 * (1 - percent));
+                var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
             case > 28:
             {
                 var percent = (angle - 28) / 4;
-                var whiteness = (int) (255 * (1 - percent));
+                var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
             default:

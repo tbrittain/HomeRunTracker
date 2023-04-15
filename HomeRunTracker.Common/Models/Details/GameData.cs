@@ -12,4 +12,8 @@ public class GameData
     [JsonProperty("teams")]
     [Id(1)]
     public TeamMatchup TeamMatchup { get; set; } = new();
+    
+    [JsonProperty("datetime")]
+    [Id(2)]
+    public GameDateTime GameDateTime { get; set; } = new();
 }

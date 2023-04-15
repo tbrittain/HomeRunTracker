@@ -64,13 +64,13 @@ public class HomeRunModel
 
             switch (TotalDistance)
             {
-                case > 500:
+                case >= 500:
                     sb.Append(" 🔥🔥🔥");
                     break;
-                case > 480:
+                case >= 480:
                     sb.Append(" 🔥🔥");
                     break;
-                case > 460:
+                case >= 460:
                     sb.Append(" 🔥");
                     break;
             }
@@ -89,13 +89,13 @@ public class HomeRunModel
 
             switch (LaunchSpeed)
             {
-                case > 116:
+                case >= 116:
                     sb.Append(" 🔥🔥🔥");
                     break;
-                case > 113:
+                case >= 113:
                     sb.Append(" 🔥🔥");
                     break;
-                case > 110:
+                case >= 110:
                     sb.Append(" 🔥");
                     break;
             }
@@ -125,13 +125,13 @@ public class HomeRunModel
 
             switch (LeverageIndex)
             {
-                case > 6:
+                case >= 6:
                     sb.Append(" ❗❗❗");
                     break;
-                case > (float) 4.5:
+                case >= (float) 4.5:
                     sb.Append(" ❗❗");
                     break;
-                case > 3:
+                case >= 3:
                     sb.Append(" ❗");
                     break;
             }
@@ -140,13 +140,13 @@ public class HomeRunModel
         }
     }
 
-    public string DistanceColor => GetColorForDistance(TotalDistance).ToString();
+    public string DistanceColor => GetColorForDistance().ToString();
 
-    public string LaunchSpeedColor => GetColorForLaunchSpeed(LaunchSpeed).ToString();
+    public string LaunchSpeedColor => GetColorForLaunchSpeed().ToString();
 
-    public string LaunchAngleColor => GetColorForLaunchAngle(LaunchAngle).ToString();
+    public string LaunchAngleColor => GetColorForLaunchAngle().ToString();
     
-    public string LeverageIndexColor => GetColorForLeverageIndex(LeverageIndex).ToString();
+    public string LeverageIndexColor => GetColorForLeverageIndex().ToString();
 
     private readonly record struct RgbColor(byte R, byte G, byte B)
     {
@@ -156,9 +156,9 @@ public class HomeRunModel
         }
     }
 
-    private static RgbColor GetColorForDistance(double distance)
+    private RgbColor GetColorForDistance()
     {
-        switch (distance)
+        switch (TotalDistance)
         {
             case 400:
                 return new RgbColor(255, 255, 255);
@@ -168,13 +168,13 @@ public class HomeRunModel
                 return new RgbColor(255, 0, 0);
             case < 400:
             {
-                var percent = (distance - 350) / 50.0;
+                var percent = (TotalDistance - 350) / 50.0;
                 var whiteness = (byte) (255 * percent);
                 return new RgbColor(whiteness, whiteness, 255);
             }
             case > 400:
             {
-                var percent = (distance - 400) / 50.0;
+                var percent = (TotalDistance - 400) / 50.0;
                 var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
@@ -183,9 +183,9 @@ public class HomeRunModel
         }
     }
 
-    private static RgbColor GetColorForLaunchSpeed(double speed)
+    private RgbColor GetColorForLaunchSpeed()
     {
-        var roundedSpeed = (int) Math.Round(speed);
+        var roundedSpeed = (int) Math.Round(LaunchSpeed);
         switch (roundedSpeed)
         {
             case <= 90:
@@ -196,22 +196,22 @@ public class HomeRunModel
                 return new RgbColor(255, 0, 0);
             case > 100 and < 110:
             {
-                var percent = (speed - 100) / 10;
+                var percent = (LaunchSpeed - 100) / 10;
                 var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
             case > 90 and < 100:
             {
-                var percent = (speed - 90) / 10;
+                var percent = (LaunchSpeed - 90) / 10;
                 var whiteness = (byte) (255 * percent);
                 return new RgbColor(whiteness, whiteness, 255);
             }
         }
     }
 
-    private static RgbColor GetColorForLaunchAngle(double angle)
+    private RgbColor GetColorForLaunchAngle()
     {
-        switch (angle)
+        switch (LaunchAngle)
         {
             case 28:
                 return new RgbColor(255, 0, 0);
@@ -219,13 +219,13 @@ public class HomeRunModel
                 return new RgbColor(255, 255, 255);
             case < 28:
             {
-                var percent = (angle - 24) / 4;
+                var percent = (LaunchAngle - 24) / 4;
                 var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
             case > 28:
             {
-                var percent = (angle - 28) / 4;
+                var percent = (LaunchAngle - 28) / 4;
                 var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
@@ -234,9 +234,9 @@ public class HomeRunModel
         }
     }
 
-    private static RgbColor GetColorForLeverageIndex(float leverageIndex)
+    private RgbColor GetColorForLeverageIndex()
     {
-        switch (leverageIndex)
+        switch (LeverageIndex)
         {
             case 0:
                 return new RgbColor(255, 255, 255);
@@ -244,7 +244,7 @@ public class HomeRunModel
                 return new RgbColor(255, 0, 0);
             default:
             {
-                var percent = (leverageIndex - 0) / 3;
+                var percent = (LeverageIndex) / 3;
                 var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }

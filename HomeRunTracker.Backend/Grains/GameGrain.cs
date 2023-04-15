@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using HomeRunTracker.Backend.Services;
 using HomeRunTracker.Backend.Services.HttpService;
 using HomeRunTracker.Common.Enums;
 using HomeRunTracker.Common.Models.Content;
@@ -15,17 +16,20 @@ public class GameGrain : Grain, IGameGrain
     private readonly HashSet<HomeRunRecord> _homeRuns = new();
     private readonly IHttpService _httpService;
     private readonly ILogger<GameGrain> _logger;
+    private readonly LeverageIndexService _leverageIndexService;
     private readonly IMediator _mediator;
     private MlbGameDetails _gameDetails = new();
     private MlbGameContent _gameContent = new();
     private int _gameId;
     private bool _isInitialLoad = true;
 
-    public GameGrain(ILogger<GameGrain> logger, IMediator mediator, IHttpService httpService)
+    public GameGrain(ILogger<GameGrain> logger, IMediator mediator, IHttpService httpService,
+        LeverageIndexService leverageIndexService)
     {
         _logger = logger;
         _mediator = mediator;
         _httpService = httpService;
+        _leverageIndexService = leverageIndexService;
     }
 
     private List<string> HomeRunHashes => _homeRuns.Select(x => x.Hash).ToList();
@@ -190,7 +194,8 @@ public class GameGrain : Grain, IGameGrain
             TeamId = batterTeamId,
             TeamName = batterTeamName,
             TeamNameAgainstId = pitcherTeamId,
-            TeamNameAgainst = pitcherTeamName
+            TeamNameAgainst = pitcherTeamName,
+            LeverageIndex = _leverageIndexService.GetLeverageIndex(play)
         };
 
         _homeRuns.Add(homeRunRecord);

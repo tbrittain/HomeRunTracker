@@ -63,6 +63,9 @@ public record HomeRunRecord
     [Id(18)]
     public string? HighlightUrl { get; set; } = string.Empty;
     
+    [Id(19)]
+    public float LeverageIndex { get; set; }
+    
     public static string GetHash(string description, int gameId)
     {
         var descriptionHash = MD5.HashData(Encoding.UTF8.GetBytes(description + gameId));

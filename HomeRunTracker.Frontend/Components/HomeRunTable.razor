@@ -22,7 +22,7 @@
             <img src="@context.BatterTeamImageUrl" alt="@context.TeamName" width="30" style="border-radius: 100%"/>
         </TemplateColumn>
         <TemplateColumn
-            Title="Total Distance"
+            Title="Distance"
             Sortable="true"
             SortBy="@_distanceSort"
             IsDefaultSort="SortDirection.Descending">
@@ -43,13 +43,23 @@
             </div>
         </TemplateColumn>
         <TemplateColumn
-            Title="Exit Velocity"
+            Title="Exit Velo"
             Sortable="true"
             SortBy="@_exitVelocitySort">
             <div
                 style="text-align: center;"
                 class="fw-bold">
                 <p style="color: @context.LaunchSpeedColor">@context.FormattedLaunchSpeed</p>
+            </div>
+        </TemplateColumn>
+        <TemplateColumn
+            Title="Leverage Index"
+            Sortable="true"
+            SortBy="@_leverageIndexSort">
+            <div
+                style="text-align: center;"
+                class="fw-bold">
+                <p style="color: @context.LeverageIndexColor">@context.FormattedLeverageIndex</p>
             </div>
         </TemplateColumn>
         <PropertyColumn Title="Time" Property="@(c => c.DateTime)" Format="h:mm tt" Sortable="true"/>

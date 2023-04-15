@@ -38,6 +38,7 @@ builder.Services.AddScoped<INotificationHandler<HomeRunNotification>, HomeRunHan
 builder.Services.AddScoped<INotificationHandler<HomeRunUpdatedNotification>, HomeRunUpdatedHandler>();
 builder.Services.AddSingleton<IHttpService, HttpService>();
 builder.Services.AddSingleton<MlbCurrentDayGamePollingService>();
+builder.Services.AddSingleton<LeverageIndexService>();
 builder.Services.AddHostedService<MlbCurrentDayGamePollingService>(p => p.GetRequiredService<MlbCurrentDayGamePollingService>());
 
 var app = builder.Build();

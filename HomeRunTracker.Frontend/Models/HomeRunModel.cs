@@ -45,6 +45,8 @@ public class HomeRunModel
 
     public string? HighlightUrl { get; set; }
 
+    public float LeverageIndex { get; set; }
+
     // ReSharper disable once UnusedMember.Global
     public string BatterImageUrl =>
         $"https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_100,q_auto:best/v1/people/{BatterId}/headshot/67/current";
@@ -114,13 +116,39 @@ public class HomeRunModel
         }
     }
 
+    public string FormattedLeverageIndex
+    {
+        get
+        {
+            var sb = new StringBuilder();
+            sb.Append(LeverageIndex);
+
+            switch (LeverageIndex)
+            {
+                case > 6:
+                    sb.Append(" ❗❗❗");
+                    break;
+                case > (float) 4.5:
+                    sb.Append(" ❗❗");
+                    break;
+                case > 3:
+                    sb.Append(" ❗");
+                    break;
+            }
+
+            return sb.ToString();
+        }
+    }
+
     public string DistanceColor => GetColorForDistance(TotalDistance).ToString();
 
     public string LaunchSpeedColor => GetColorForLaunchSpeed(LaunchSpeed).ToString();
 
     public string LaunchAngleColor => GetColorForLaunchAngle(LaunchAngle).ToString();
+    
+    public string LeverageIndexColor => GetColorForLeverageIndex(LeverageIndex).ToString();
 
-    private readonly record struct RgbColor(int R, int G, int B)
+    private readonly record struct RgbColor(byte R, byte G, byte B)
     {
         public override string ToString()
         {
@@ -141,13 +169,13 @@ public class HomeRunModel
             case < 400:
             {
                 var percent = (distance - 350) / 50.0;
-                var whiteness = (int) (255 * percent);
+                var whiteness = (byte) (255 * percent);
                 return new RgbColor(whiteness, whiteness, 255);
             }
             case > 400:
             {
                 var percent = (distance - 400) / 50.0;
-                var whiteness = (int) (255 * (1 - percent));
+                var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
             default:
@@ -169,13 +197,13 @@ public class HomeRunModel
             case > 100 and < 110:
             {
                 var percent = (speed - 100) / 10;
-                var whiteness = (int) (255 * (1 - percent));
+                var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
             case > 90 and < 100:
             {
                 var percent = (speed - 90) / 10;
-                var whiteness = (int) (255 * percent);
+                var whiteness = (byte) (255 * percent);
                 return new RgbColor(whiteness, whiteness, 255);
             }
         }
@@ -192,17 +220,34 @@ public class HomeRunModel
             case < 28:
             {
                 var percent = (angle - 24) / 4;
-                var whiteness = (int) (255 * (1 - percent));
+                var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
             case > 28:
             {
                 var percent = (angle - 28) / 4;
-                var whiteness = (int) (255 * (1 - percent));
+                var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
             default:
                 return new RgbColor(0, 0, 0);
+        }
+    }
+
+    private static RgbColor GetColorForLeverageIndex(float leverageIndex)
+    {
+        switch (leverageIndex)
+        {
+            case 0:
+                return new RgbColor(255, 255, 255);
+            case > 3:
+                return new RgbColor(255, 0, 0);
+            default:
+            {
+                var percent = (leverageIndex - 0) / 3;
+                var whiteness = (byte) (255 * (1 - percent));
+                return new RgbColor(255, whiteness, whiteness);
+            }
         }
     }
 }

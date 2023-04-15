@@ -16,6 +16,7 @@ public partial class HomeRunTable
     private readonly GridSort<HomeRunModel> _distanceSort = GridSort<HomeRunModel>.ByAscending(x => x.TotalDistance);
     private readonly GridSort<HomeRunModel> _exitVelocitySort = GridSort<HomeRunModel>.ByDescending(x => x.LaunchSpeed);
     private readonly GridSort<HomeRunModel> _launchAngleSort = GridSort<HomeRunModel>.ByDescending(x => x.LaunchAngle);
+    private readonly GridSort<HomeRunModel> _leverageIndexSort = GridSort<HomeRunModel>.ByDescending(x => x.LeverageIndex);
 
     [Parameter]
     public DateTime DateTime { get; set; }

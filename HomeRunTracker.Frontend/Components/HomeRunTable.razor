@@ -2,6 +2,7 @@
 @using HomeRunTracker.Frontend.Services
 @inject IHttpService HttpService
 @inject HomeRunHubService HomeRunHubService
+@inject TimezoneService TimezoneService
 
 <div>
     @if (_isLoading)
@@ -63,7 +64,7 @@
             </div>
         </TemplateColumn>
         <TemplateColumn Title="Time" Sortable="true" SortBy="@_dateTimeOffsetSort">
-            <p>@context.FormattedDateTimeOffset</p>
+            <p>@context.FormattedDateTimeOffset(_localOffset)</p>
         </TemplateColumn>
         <PropertyColumn Title="RBI" Property="@(c => c.Rbi)" Sortable="true"/>
         <PropertyColumn Title="Description" Property="@(c => c.Description)" Sortable="false"/>

@@ -21,6 +21,8 @@ public partial class HomeRunTable
 
     [Parameter]
     public DateTime DateTime { get; set; }
+    
+    private TimeSpan _localOffset = TimeSpan.Zero;
 
     protected override async Task OnInitializedAsync()
     {
@@ -48,6 +50,14 @@ public partial class HomeRunTable
         await InvokeAsync(StateHasChanged);
 
         await base.OnParametersSetAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _localOffset = await TimezoneService.GetLocalOffset();
+        await InvokeAsync(StateHasChanged);
+        
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     private async Task OnHomeRunUpdated(HomeRunUpdatedNotification arg)

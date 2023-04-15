@@ -66,8 +66,9 @@ public partial class HomeRunTable
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task OnHomeRunReceived(HomeRunRecord homeRunDto)
+    private async Task OnHomeRunReceived(HomeRunNotification homeRunNotification)
     {
+        var homeRunDto = homeRunNotification.HomeRun;
         var homeRun = homeRunDto.Adapt<HomeRunModel>();
         _homeRuns.Add(homeRun);
         _items = _homeRuns.AsQueryable();

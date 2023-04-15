@@ -11,7 +11,7 @@ public class HomeRunModel
 
     public int GameId { get; set; }
 
-    public DateTime DateTime { get; set; }
+    public DateTimeOffset DateTimeOffset { get; set; }
 
     public int BatterId { get; set; }
 
@@ -53,6 +53,13 @@ public class HomeRunModel
 
     // ReSharper disable once UnusedMember.Global
     public string BatterTeamImageUrl => $"https://midfield.mlbstatic.com/v1/team/{TeamId}/spots/72";
+    
+    public string FormattedDateTimeOffset(TimeSpan currentOffset)
+    {
+        var localDateTime = DateTimeOffset.ToOffset(currentOffset);
+        var formatted = localDateTime.ToString("h:mm tt");
+        return formatted;
+    }
 
     public string FormattedDistance
     {

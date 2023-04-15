@@ -13,7 +13,7 @@ public record HomeRunRecord
     public int GameId { get; set; }
     
     [Id(2)]
-    public DateTime DateTime { get; set; }
+    public DateTimeOffset DateTimeOffset { get; set; }
     
     [Id(3)]
     public int BatterId { get; set; }

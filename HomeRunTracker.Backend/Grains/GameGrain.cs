@@ -163,7 +163,7 @@ public class GameGrain : Grain, IGameGrain
             if (!_isInitialLoad)
             {
                 await _mediator.Publish(new HomeRunUpdatedNotification(descriptionHashString, _gameId,
-                    _gameDetails.GameData.GameDateTime.DateTime, highlightUrl));
+                    _gameDetails.GameData.GameDateTime.DateTimeOffset, highlightUrl));
             }
 
             return;
@@ -179,7 +179,7 @@ public class GameGrain : Grain, IGameGrain
         {
             Hash = descriptionHashString,
             GameId = _gameId,
-            DateTime = play.DateTime,
+            DateTimeOffset = play.DateTimeOffset,
             BatterId = play.PlayerMatchup.Batter.Id,
             BatterName = play.PlayerMatchup.Batter.FullName,
             Description = play.Result.Description,
@@ -202,7 +202,7 @@ public class GameGrain : Grain, IGameGrain
         _homeRuns.Add(homeRunRecord);
         if (!_isInitialLoad)
         {
-            await _mediator.Publish(new HomeRunNotification(_gameId, _gameDetails.GameData.GameDateTime.DateTime, homeRunRecord));
+            await _mediator.Publish(new HomeRunNotification(_gameId, _gameDetails.GameData.GameDateTime.DateTimeOffset, homeRunRecord));
         }
     }
 }

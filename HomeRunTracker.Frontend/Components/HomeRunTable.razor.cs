@@ -17,9 +17,12 @@ public partial class HomeRunTable
     private readonly GridSort<HomeRunModel> _exitVelocitySort = GridSort<HomeRunModel>.ByDescending(x => x.LaunchSpeed);
     private readonly GridSort<HomeRunModel> _launchAngleSort = GridSort<HomeRunModel>.ByDescending(x => x.LaunchAngle);
     private readonly GridSort<HomeRunModel> _leverageIndexSort = GridSort<HomeRunModel>.ByDescending(x => x.LeverageIndex);
+    private readonly GridSort<HomeRunModel> _dateTimeOffsetSort = GridSort<HomeRunModel>.ByDescending(x => x.DateTimeOffset);
 
     [Parameter]
     public DateTime DateTime { get; set; }
+    
+    private TimeSpan _localOffset = TimeSpan.Zero;
 
     protected override async Task OnInitializedAsync()
     {
@@ -47,6 +50,14 @@ public partial class HomeRunTable
         await InvokeAsync(StateHasChanged);
 
         await base.OnParametersSetAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _localOffset = await TimezoneService.GetLocalOffset();
+        await InvokeAsync(StateHasChanged);
+        
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     private async Task OnHomeRunUpdated(HomeRunUpdatedNotification arg)

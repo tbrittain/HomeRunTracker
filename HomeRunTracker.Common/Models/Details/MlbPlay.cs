@@ -21,7 +21,7 @@ public record MlbPlay
     [Id(3)]
     public string PlayEndTime { get; set; } = string.Empty;
     
-    public DateTime DateTime => DateTime.Parse(PlayEndTime);
+    public DateTimeOffset DateTimeOffset => DateTimeOffset.Parse(PlayEndTime);
     
     [JsonProperty("about")]
     [Id(4)]

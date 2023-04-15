@@ -6,7 +6,7 @@ namespace HomeRunTracker.Common.Models.Notifications;
 [GenerateSerializer]
 public class HomeRunNotification : INotification
 {
-    public HomeRunNotification(int gameId, DateTime gameStartTime, HomeRunRecord homeRun)
+    public HomeRunNotification(int gameId, DateTimeOffset gameStartTime, HomeRunRecord homeRun)
     {
         GameId = gameId;
         GameStartTime = gameStartTime;
@@ -17,7 +17,7 @@ public class HomeRunNotification : INotification
     public int GameId { get; }
     
     [Id(1)]
-    public DateTime GameStartTime { get; }
+    public DateTimeOffset GameStartTime { get; }
 
     [Id(2)]
     public HomeRunRecord HomeRun { get; }

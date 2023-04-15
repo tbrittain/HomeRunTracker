@@ -162,7 +162,8 @@ public class GameGrain : Grain, IGameGrain
             existingHomeRun.HighlightUrl = highlightUrl;
             if (!_isInitialLoad)
             {
-                await _mediator.Publish(new HomeRunUpdatedNotification(descriptionHashString, _gameId, highlightUrl));
+                await _mediator.Publish(new HomeRunUpdatedNotification(descriptionHashString, _gameId,
+                    _gameDetails.GameData.GameDateTime.DateTime, highlightUrl));
             }
 
             return;
@@ -201,7 +202,7 @@ public class GameGrain : Grain, IGameGrain
         _homeRuns.Add(homeRunRecord);
         if (!_isInitialLoad)
         {
-            await _mediator.Publish(new HomeRunNotification(_gameId, homeRunRecord));
+            await _mediator.Publish(new HomeRunNotification(_gameId, _gameDetails.GameData.GameDateTime.DateTime, homeRunRecord));
         }
     }
 }

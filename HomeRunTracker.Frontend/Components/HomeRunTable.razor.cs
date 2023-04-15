@@ -25,6 +25,8 @@ public partial class HomeRunTable
     {
         await HomeRunHubService.StartHubConnection();
         HomeRunHubService.SubscribeToHubMethods();
+        HomeRunHubService.OnHomeRunReceived += OnHomeRunReceived;
+        HomeRunHubService.OnHomeRunUpdated += OnHomeRunUpdated;
     }
 
     protected override async Task OnParametersSetAsync()
@@ -44,30 +46,30 @@ public partial class HomeRunTable
         _isLoading = false;
         await InvokeAsync(StateHasChanged);
 
-        if (DateTime.Date != DateTime.Today)
-        {
-            HomeRunHubService.OnHomeRunReceived -= OnHomeRunReceived;
-            HomeRunHubService.OnHomeRunUpdated -= OnHomeRunUpdated;
-        }
-        else
-        {
-            HomeRunHubService.OnHomeRunReceived += OnHomeRunReceived;
-            HomeRunHubService.OnHomeRunUpdated += OnHomeRunUpdated;
-        }
-
         await base.OnParametersSetAsync();
     }
 
     private async Task OnHomeRunUpdated(HomeRunUpdatedNotification arg)
     {
+        if (arg.GameStartTime.Date != DateTime.Date)
+        {
+            return;
+        }
+        
         var homeRun = _homeRuns.Single(_ => _.Hash == arg.HomeRunHash);
         homeRun.HighlightUrl = arg.HighlightUrl;
 
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task OnHomeRunReceived(HomeRunRecord homeRunDto)
+    private async Task OnHomeRunReceived(HomeRunNotification arg)
     {
+        if (arg.GameStartTime.Date != DateTime.Date)
+        {
+            return;
+        }
+        
+        var homeRunDto = arg.HomeRun;
         var homeRun = homeRunDto.Adapt<HomeRunModel>();
         _homeRuns.Add(homeRun);
         _items = _homeRuns.AsQueryable();

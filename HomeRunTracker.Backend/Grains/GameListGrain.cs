@@ -78,7 +78,7 @@ public class GameListGrain : Grain, IGameListGrain
         _logger.LogInformation("Publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
             notification.GameId.ToString());
 
-        await _hubContext.Clients.All.SendAsync("ReceiveHomeRun", JsonConvert.SerializeObject(notification.HomeRun));
+        await _hubContext.Clients.All.SendAsync("ReceiveHomeRun", JsonConvert.SerializeObject(notification));
 
         _logger.LogInformation("Finished publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
             notification.GameId.ToString());

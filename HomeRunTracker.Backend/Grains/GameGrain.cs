@@ -23,7 +23,6 @@ public class GameGrain : Grain, IGameGrain
     private int _gameId;
     private bool _isInitialLoad = true;
 
-    // TODO: attach the game start time on each home run notification and home run update notification
     public GameGrain(ILogger<GameGrain> logger, IMediator mediator, IHttpService httpService,
         LeverageIndexService leverageIndexService)
     {

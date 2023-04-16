@@ -10,7 +10,8 @@ using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseOrleans((ctx, siloBuilder) => {
+builder.Host.UseOrleans((ctx, siloBuilder) =>
+{
     // In order to support multiple hosts forming a cluster, they must listen on different ports.
     // Use the --InstanceId X option to launch subsequent hosts.
     var instanceId = ctx.Configuration.GetValue<int>("InstanceId");
@@ -21,6 +22,15 @@ builder.Host.UseOrleans((ctx, siloBuilder) => {
             primarySiloEndpoint: new IPEndPoint(IPAddress.Loopback, 11111))
         .AddActivityPropagation()
         .AddMemoryGrainStorage("PubSubStore");
+
+#if DEBUG
+    siloBuilder.UseDashboard(options =>
+    {
+        options.Username = "admin";
+        options.Password = "admin";
+        options.Port = 8080 + instanceId;
+    });
+#endif
 });
 
 builder.WebHost.UseKestrel((ctx, kestrelOptions) =>
@@ -39,7 +49,8 @@ builder.Services.AddScoped<INotificationHandler<HomeRunUpdatedNotification>, Hom
 builder.Services.AddSingleton<IHttpService, HttpService>();
 builder.Services.AddSingleton<MlbCurrentDayGamePollingService>();
 builder.Services.AddSingleton<LeverageIndexService>();
-builder.Services.AddHostedService<MlbCurrentDayGamePollingService>(p => p.GetRequiredService<MlbCurrentDayGamePollingService>());
+builder.Services.AddHostedService<MlbCurrentDayGamePollingService>(p =>
+    p.GetRequiredService<MlbCurrentDayGamePollingService>());
 
 var app = builder.Build();
 

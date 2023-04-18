@@ -1,3 +1,4 @@
+using Blazored.Modal;
 using HomeRunTracker.Frontend.Services;
 using HomeRunTracker.Frontend.Services.HttpService;
 
@@ -11,6 +12,7 @@ builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = true;
 });
+builder.Services.AddBlazoredModal();
 builder.Services.AddHttpClient();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();

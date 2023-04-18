@@ -72,11 +72,9 @@
             <td>
                 @if (!string.IsNullOrEmpty(@context.HighlightUrl))
                 {
-                    <a href="@context.HighlightUrl" target="_blank">Link</a>
-                }
-                else
-                {
-                    <span>Not available</span>
+                    <button @onclick="(() => OnVideoButtonClicked(context))">
+                        <i class="fas fa-play"></i>
+                    </button>
                 }
             </td>
         </TemplateColumn>

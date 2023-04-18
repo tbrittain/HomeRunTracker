@@ -39,9 +39,12 @@
         <TemplateColumn Title="Team" Sortable="true" SortBy="_teamSort">
             <img src="@context.BatterTeamImageUrl" alt="@context.TeamName" width="30" style="border-radius: 100%"/>
         </TemplateColumn>
-        <TemplateColumn Title="Result" Sortable="true" SortBy="_playResultSort">
-            <p>@context.Result.ToString()</p>
-        </TemplateColumn>
+        @if (!OnlyShowHomeRuns)
+        {
+            <TemplateColumn Title="Result" Sortable="true" SortBy="_playResultSort">
+                <p>@context.Result.ToString()</p>
+            </TemplateColumn>
+        }
         <TemplateColumn
             Title="Distance"
             Sortable="true"

@@ -4,5 +4,5 @@ namespace HomeRunTracker.Frontend.Services.HttpService;
 
 public interface IHttpService
 {
-    Task<List<HomeRunRecord>> GetHomeRunsAsync(DateTime? dateTime);
+    Task<List<ScoringPlayRecord>> GetHomeRunsAsync(DateTime? dateTime);
 }

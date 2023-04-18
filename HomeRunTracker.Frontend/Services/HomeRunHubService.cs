@@ -25,7 +25,7 @@ public class HomeRunHubService
     {
         _hubConnection.On<string>("ReceiveHomeRun", json =>
         {
-            var homeRun = JsonConvert.DeserializeObject<HomeRunNotification>(json);
+            var homeRun = JsonConvert.DeserializeObject<ScoringPlayNotification>(json);
             if (homeRun is null)
             {
                 throw new InvalidOperationException("Home run is null");
@@ -36,7 +36,7 @@ public class HomeRunHubService
 
         _hubConnection.On<string>("UpdateHomeRun", json =>
         {
-            var notification = JsonConvert.DeserializeObject<HomeRunUpdatedNotification>(json);
+            var notification = JsonConvert.DeserializeObject<ScoringPlayUpdatedNotification>(json);
             if (notification is null)
             {
                 throw new InvalidOperationException("Home run update notification is null");
@@ -46,7 +46,7 @@ public class HomeRunHubService
         });
     }
 
-    public event Func<HomeRunNotification, Task>? OnHomeRunReceived;
+    public event Func<ScoringPlayNotification, Task>? OnHomeRunReceived;
     
-    public event Func<HomeRunUpdatedNotification, Task>? OnHomeRunUpdated;
+    public event Func<ScoringPlayUpdatedNotification, Task>? OnHomeRunUpdated;
 }

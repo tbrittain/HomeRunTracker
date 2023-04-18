@@ -12,7 +12,7 @@ public class HttpService : IHttpService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<List<HomeRunRecord>> GetHomeRunsAsync(DateTime? dateTime)
+    public async Task<List<ScoringPlayRecord>> GetHomeRunsAsync(DateTime? dateTime)
     {
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri("http://localhost:5001");
@@ -25,7 +25,7 @@ public class HttpService : IHttpService
         response.EnsureSuccessStatusCode();
         
         var content = await response.Content.ReadAsStringAsync();
-        var homeRuns = JsonConvert.DeserializeObject<List<HomeRunRecord>>(content);
+        var homeRuns = JsonConvert.DeserializeObject<List<ScoringPlayRecord>>(content);
         if (homeRuns is null)
             throw new InvalidOperationException("Unable to deserialize home runs");
         

@@ -14,11 +14,11 @@ public class GameListGrain : Grain, IGameListGrain
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<GameListGrain> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private readonly IHubContext<HomeRunHub> _hubContext;
+    private readonly IHubContext<ScoringPlayHub> _hubContext;
     private readonly IHttpService _httpService;
 
     public GameListGrain(IClusterClient clusterClient, ILogger<GameListGrain> logger, IServiceProvider serviceProvider,
-        IHubContext<HomeRunHub> hubContext, IHttpService httpService)
+        IHubContext<ScoringPlayHub> hubContext, IHttpService httpService)
     {
         _clusterClient = clusterClient;
         _logger = logger;
@@ -27,7 +27,7 @@ public class GameListGrain : Grain, IGameListGrain
         _httpService = httpService;
     }
 
-    public async Task<List<HomeRunRecord>> GetHomeRuns(DateTime dateTime)
+    public async Task<List<ScoringPlayRecord>> GetHomeRuns(DateTime dateTime)
     {
         _logger.LogInformation("Getting all home runs");
         var pollingService = _serviceProvider.GetService<MlbCurrentDayGamePollingService>();
@@ -48,7 +48,7 @@ public class GameListGrain : Grain, IGameListGrain
         }
 
         if (gameSchedule.TotalGames == 0)
-            return new List<HomeRunRecord>();
+            return new List<ScoringPlayRecord>();
 
         var gameIds = gameSchedule.Dates
             .SelectMany(x => x.Games
@@ -73,18 +73,18 @@ public class GameListGrain : Grain, IGameListGrain
         return allHomeRuns;
     }
 
-    public async Task PublishHomeRun(HomeRunNotification notification)
+    public async Task PublishHomeRun(ScoringPlayNotification notification)
     {
-        _logger.LogInformation("Publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
+        _logger.LogInformation("Publishing home run {Hash} for game {GameId}", notification.ScoringPlay.Hash,
             notification.GameId.ToString());
 
         await _hubContext.Clients.All.SendAsync("ReceiveHomeRun", JsonConvert.SerializeObject(notification));
 
-        _logger.LogInformation("Finished publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
+        _logger.LogInformation("Finished publishing home run {Hash} for game {GameId}", notification.ScoringPlay.Hash,
             notification.GameId.ToString());
     }
 
-    public async Task PublishHomeRunUpdated(HomeRunUpdatedNotification notification)
+    public async Task PublishHomeRunUpdated(ScoringPlayUpdatedNotification notification)
     {
         _logger.LogInformation("Publishing home run modified {Hash} for game {GameId}", notification.HomeRunHash,
             notification.GameId.ToString());

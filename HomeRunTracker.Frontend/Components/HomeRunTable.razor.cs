@@ -75,7 +75,7 @@ public partial class HomeRunTable
         await base.OnAfterRenderAsync(firstRender);
     }
 
-    private async Task OnHomeRunUpdated(HomeRunUpdatedNotification arg)
+    private async Task OnHomeRunUpdated(ScoringPlayUpdatedNotification arg)
     {
         if (arg.GameStartTime.Date != DateTime.Date)
         {
@@ -88,14 +88,14 @@ public partial class HomeRunTable
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task OnHomeRunReceived(HomeRunNotification arg)
+    private async Task OnHomeRunReceived(ScoringPlayNotification arg)
     {
         if (arg.GameStartTime.Date != DateTime.Date)
         {
             return;
         }
 
-        var homeRunDto = arg.HomeRun;
+        var homeRunDto = arg.ScoringPlay;
         var homeRun = homeRunDto.Adapt<HomeRunModel>();
         _homeRuns.Add(homeRun);
         _items = _homeRuns.AsQueryable();

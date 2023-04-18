@@ -23,6 +23,7 @@ public record PlayResult
         "walk" => EPlayResult.Walk,
         "field_out" => EPlayResult.FieldOut,
         "force_out" => EPlayResult.ForceOut,
+        "sac_fly" => EPlayResult.SacrificeFly,
         "strikeout" => EPlayResult.Strikeout,
         "single" => EPlayResult.Single,
         "double" => EPlayResult.Double,

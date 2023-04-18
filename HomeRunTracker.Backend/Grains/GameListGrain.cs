@@ -65,12 +65,12 @@ public class GameListGrain : Grain, IGameListGrain
 
         await Task.WhenAll(tasks);
 
-        var allHomeRuns = tasks
+        var allScoringPlays = tasks
             .SelectMany(x => x.Result)
             .ToList();
 
-        _logger.LogInformation("Returning {HomeRunCount} home runs", allHomeRuns.Count.ToString());
-        return allHomeRuns;
+        _logger.LogInformation("Returning {NumScoringPlays} scoring plays", allScoringPlays.Count.ToString());
+        return allScoringPlays;
     }
 
     public async Task PublishScoringPlay(ScoringPlayNotification notification)

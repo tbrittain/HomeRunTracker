@@ -10,5 +10,6 @@ public enum EPlayResult
     Single,
     Double,
     Triple,
-    HomeRun
+    HomeRun,
+    SacrificeFly
 }

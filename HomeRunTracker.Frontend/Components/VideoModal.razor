@@ -1,0 +1,47 @@
+﻿<div class="toast-container p-3 @DisplayClass" data-bs-autohide="true" data-bs-delay="5000"
+     style="position: absolute; width: 90vw; height: 90vh;">
+    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto">@HeaderText</strong>
+            <button type="button" class="btn-close" aria-label="Close" @onclick="Close"></button>
+        </div>
+
+        <div class="toast-body">
+            <video src="@VideoSrc" type="video/mp4" controls autoplay></video>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    [Parameter]
+    public string HeaderText { get; set; } = string.Empty;
+
+    [Parameter]
+    public string VideoSrc { get; set; } = string.Empty;
+
+    private string DisplayClass => IsVisible ? "d-block" : "d-none";
+
+    public void Show(string headerText = "", string videoSrc = "")
+    {
+        HeaderText = headerText;
+        VideoSrc = videoSrc;
+        IsVisible = true;
+        StateHasChanged();
+    }
+
+    private void Close()
+    {
+        HeaderText = string.Empty;
+        VideoSrc = string.Empty;
+        IsVisible = false;
+        StateHasChanged();
+    }
+
+}

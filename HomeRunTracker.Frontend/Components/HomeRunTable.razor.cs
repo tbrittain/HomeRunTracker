@@ -1,4 +1,6 @@
-﻿using HomeRunTracker.Common.Models.Internal;
+﻿using Blazored.Modal;
+using Blazored.Modal.Services;
+using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
 using HomeRunTracker.Frontend.Models;
 using Mapster;
@@ -31,7 +33,7 @@ public partial class HomeRunTable
     private readonly GridSort<HomeRunModel> _dateTimeOffsetSort =
         GridSort<HomeRunModel>.ByDescending(x => x.DateTimeOffset);
 
-    private VideoModal _modalRef = null!;
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
 
     [Parameter] public DateTime DateTime { get; set; }
 
@@ -104,7 +106,17 @@ public partial class HomeRunTable
     private void OnVideoButtonClicked(HomeRunModel model)
     {
         var header = model.Description;
-        var videoUrl = model.HighlightUrl!;
-        _modalRef.Show(header, videoUrl);
+        var videoSrc = model.HighlightUrl!;
+
+        var parameters = new ModalParameters()
+            .Add(nameof(VideoPlayer.HeaderText), header)
+            .Add(nameof(VideoPlayer.VideoSrc), videoSrc);
+        
+        var options = new ModalOptions
+        {
+            Size = ModalSize.ExtraLarge
+        };
+        
+        Modal.Show<VideoPlayer>("", parameters, options);
     }
 }

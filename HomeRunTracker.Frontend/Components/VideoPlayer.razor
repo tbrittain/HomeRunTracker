@@ -1,0 +1,18 @@
+﻿<div data-bs-autohide="true" data-bs-delay="5000" role="alert">
+    <div>
+        <strong class="me-auto">@HeaderText</strong>
+    </div>
+
+    <video src="@VideoSrc" type="video/mp4" controls autoplay style="width: 100%"></video>
+    
+</div>
+
+@code {
+
+    [Parameter]
+    public string HeaderText { get; set; } = string.Empty;
+
+    [Parameter]
+    public string VideoSrc { get; set; } = string.Empty;
+
+}

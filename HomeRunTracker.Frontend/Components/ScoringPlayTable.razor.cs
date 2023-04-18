@@ -1,5 +1,7 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
+using HomeRunTracker.Common.Enums;
+using HomeRunTracker.Common.Models.Details;
 using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
 using HomeRunTracker.Frontend.Models;
@@ -40,7 +42,33 @@ public partial class ScoringPlayTable
 
     [Parameter] public DateTime DateTime { get; set; }
 
+    private bool OnlyShowHomeRuns
+    {
+        get => _onlyShowHomeRuns;
+        set
+        {
+            _onlyShowHomeRuns = value;
+            FilterScoringPlays(_onlyShowHomeRuns);
+            StateHasChanged();
+        }
+    }
+
+    private void FilterScoringPlays(bool onlyShowHomeRuns)
+    {
+        if (_onlyShowHomeRuns)
+        {
+            _items = _scoringPlays
+                .Where(x => x.Result == EPlayResult.HomeRun)
+                .AsQueryable();
+        }
+        else
+        {
+            _items = _scoringPlays.AsQueryable();
+        }
+    }
+
     private TimeSpan _localOffset = TimeSpan.Zero;
+    private bool _onlyShowHomeRuns = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -62,7 +90,7 @@ public partial class ScoringPlayTable
         var scoringPlays = scoringPlayDtos
             .Select(x => x.Adapt<ScoringPlayModel>()).ToList();
         _scoringPlays = scoringPlays.ToHashSet();
-        _items = _scoringPlays.AsQueryable();
+        FilterScoringPlays(OnlyShowHomeRuns);
 
         _isLoading = false;
         await InvokeAsync(StateHasChanged);
@@ -101,7 +129,7 @@ public partial class ScoringPlayTable
         var homeRunDto = arg.ScoringPlay;
         var homeRun = homeRunDto.Adapt<ScoringPlayModel>();
         _scoringPlays.Add(homeRun);
-        _items = _scoringPlays.AsQueryable();
+        FilterScoringPlays(OnlyShowHomeRuns);
 
         await InvokeAsync(StateHasChanged);
     }

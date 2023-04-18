@@ -143,12 +143,7 @@ public class GameGrain : Grain, IGameGrain
     {
         var descriptionHashString = ScoringPlayRecord.GetHash(play.Result.Description, _gameId);
 
-        var scoringPlayEvent = play.Events.SingleOrDefault(e => e.HitData is not null);
-
-        if (scoringPlayEvent is null)
-        {
-            scoringPlayEvent = play.Events.Last();
-        }
+        var scoringPlayEvent = play.Events.SingleOrDefault(e => e.HitData is not null) ?? play.Events.Last();
 
         Debug.Assert(scoringPlayEvent is not null, nameof(scoringPlayEvent) + " is not null");
 

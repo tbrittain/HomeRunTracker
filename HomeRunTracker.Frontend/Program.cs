@@ -17,7 +17,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<IHttpService, HttpService>();
-builder.Services.AddScoped<HomeRunHubService>();
+builder.Services.AddScoped<ScoringPlayHubService>();
 builder.Services.AddScoped<TimezoneService>();
 
 var app = builder.Build();

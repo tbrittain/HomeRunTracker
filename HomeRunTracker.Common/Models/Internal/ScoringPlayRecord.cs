@@ -1,10 +1,11 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using HomeRunTracker.Common.Enums;
 
 namespace HomeRunTracker.Common.Models.Internal;
 
 [GenerateSerializer]
-public record HomeRunRecord
+public record ScoringPlayRecord
 {
     [Id(0)]
     public string Hash { get; set; } = string.Empty;
@@ -65,6 +66,9 @@ public record HomeRunRecord
     
     [Id(19)]
     public float LeverageIndex { get; set; }
+    
+    [Id(20)]
+    public EPlayResult PlayResult { get; set; }
     
     public static string GetHash(string description, int gameId)
     {

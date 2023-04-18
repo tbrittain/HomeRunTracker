@@ -1,11 +1,12 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using HomeRunTracker.Common.Enums;
 
 namespace HomeRunTracker.Frontend.Models;
 
 // ReSharper disable once ClassNeverInstantiated.Global
 [SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Global")]
-public class HomeRunModel
+public class ScoringPlayModel
 {
     public string Hash { get; set; } = string.Empty;
 
@@ -46,6 +47,10 @@ public class HomeRunModel
     public string? HighlightUrl { get; set; }
 
     public float LeverageIndex { get; set; }
+    
+    public int PlayResult { get; set; }
+    
+    public EPlayResult Result => (EPlayResult) PlayResult;
 
     // ReSharper disable once UnusedMember.Global
     public string BatterImageUrl =>

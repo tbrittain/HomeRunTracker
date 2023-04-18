@@ -3,9 +3,9 @@
 namespace HomeRunTracker.Common.Models.Notifications;
 
 [GenerateSerializer]
-public class HomeRunUpdatedNotification : INotification
+public class ScoringPlayUpdatedNotification : INotification
 {
-    public HomeRunUpdatedNotification(string homeRunHash, int gameId, DateTimeOffset gameStartTime, string highlightUrl)
+    public ScoringPlayUpdatedNotification(string homeRunHash, int gameId, DateTimeOffset gameStartTime, string highlightUrl)
     {
         HomeRunHash = homeRunHash;
         GameId = gameId;

@@ -4,13 +4,13 @@ using MediatR;
 namespace HomeRunTracker.Common.Models.Notifications;
 
 [GenerateSerializer]
-public class HomeRunNotification : INotification
+public class ScoringPlayNotification : INotification
 {
-    public HomeRunNotification(int gameId, DateTimeOffset gameStartTime, HomeRunRecord homeRun)
+    public ScoringPlayNotification(int gameId, DateTimeOffset gameStartTime, ScoringPlayRecord scoringPlay)
     {
         GameId = gameId;
         GameStartTime = gameStartTime;
-        HomeRun = homeRun;
+        ScoringPlay = scoringPlay;
     }
 
     [Id(0)]
@@ -20,5 +20,5 @@ public class HomeRunNotification : INotification
     public DateTimeOffset GameStartTime { get; }
 
     [Id(2)]
-    public HomeRunRecord HomeRun { get; }
+    public ScoringPlayRecord ScoringPlay { get; }
 }

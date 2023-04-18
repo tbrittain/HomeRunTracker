@@ -4,7 +4,7 @@ using MediatR;
 
 namespace HomeRunTracker.Backend.Handlers;
 
-public class HomeRunHandler : INotificationHandler<HomeRunNotification>
+public class HomeRunHandler : INotificationHandler<ScoringPlayNotification>
 {
     private readonly IClusterClient _clusterClient;
 
@@ -13,9 +13,9 @@ public class HomeRunHandler : INotificationHandler<HomeRunNotification>
         _clusterClient = clusterClient;
     }
 
-    public async Task Handle(HomeRunNotification notification, CancellationToken cancellationToken)
+    public async Task Handle(ScoringPlayNotification notification, CancellationToken cancellationToken)
     {
         var gameListGrain = _clusterClient.GetGrain<IGameListGrain>(0);
-        await gameListGrain.PublishHomeRun(notification);
+        await gameListGrain.PublishScoringPlay(notification);
     }
 }

@@ -14,11 +14,11 @@ public class GameListGrain : Grain, IGameListGrain
     private readonly IClusterClient _clusterClient;
     private readonly ILogger<GameListGrain> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private readonly IHubContext<HomeRunHub> _hubContext;
+    private readonly IHubContext<ScoringPlayHub> _hubContext;
     private readonly IHttpService _httpService;
 
     public GameListGrain(IClusterClient clusterClient, ILogger<GameListGrain> logger, IServiceProvider serviceProvider,
-        IHubContext<HomeRunHub> hubContext, IHttpService httpService)
+        IHubContext<ScoringPlayHub> hubContext, IHttpService httpService)
     {
         _clusterClient = clusterClient;
         _logger = logger;
@@ -27,9 +27,9 @@ public class GameListGrain : Grain, IGameListGrain
         _httpService = httpService;
     }
 
-    public async Task<List<HomeRunRecord>> GetHomeRuns(DateTime dateTime)
+    public async Task<List<ScoringPlayRecord>> GetScoringPlays(DateTime dateTime)
     {
-        _logger.LogInformation("Getting all home runs");
+        _logger.LogInformation("Getting all scoring plays for {Date}", dateTime.ToString("yyyy-MM-dd"));
         var pollingService = _serviceProvider.GetService<MlbCurrentDayGamePollingService>();
         if (pollingService is null)
             throw new InvalidOperationException("MlbApiPollingService not found");
@@ -48,7 +48,7 @@ public class GameListGrain : Grain, IGameListGrain
         }
 
         if (gameSchedule.TotalGames == 0)
-            return new List<HomeRunRecord>();
+            return new List<ScoringPlayRecord>();
 
         var gameIds = gameSchedule.Dates
             .SelectMany(x => x.Games
@@ -60,38 +60,38 @@ public class GameListGrain : Grain, IGameListGrain
             .ToList();
 
         var tasks = gameGrains
-            .Select(grain => grain.GetHomeRuns())
+            .Select(grain => grain.GetScoringPlays())
             .ToList();
 
         await Task.WhenAll(tasks);
 
-        var allHomeRuns = tasks
+        var allScoringPlays = tasks
             .SelectMany(x => x.Result)
             .ToList();
 
-        _logger.LogInformation("Returning {HomeRunCount} home runs", allHomeRuns.Count.ToString());
-        return allHomeRuns;
+        _logger.LogInformation("Returning {NumScoringPlays} scoring plays", allScoringPlays.Count.ToString());
+        return allScoringPlays;
     }
 
-    public async Task PublishHomeRun(HomeRunNotification notification)
+    public async Task PublishScoringPlay(ScoringPlayNotification notification)
     {
-        _logger.LogInformation("Publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
+        _logger.LogInformation("Publishing scoring play {Hash} for game {GameId}", notification.ScoringPlay.Hash,
             notification.GameId.ToString());
 
         await _hubContext.Clients.All.SendAsync("ReceiveHomeRun", JsonConvert.SerializeObject(notification));
 
-        _logger.LogInformation("Finished publishing home run {Hash} for game {GameId}", notification.HomeRun.Hash,
+        _logger.LogInformation("Finished publishing scoring play {Hash} for game {GameId}", notification.ScoringPlay.Hash,
             notification.GameId.ToString());
     }
 
-    public async Task PublishHomeRunUpdated(HomeRunUpdatedNotification notification)
+    public async Task PublishScoringPlayUpdated(ScoringPlayUpdatedNotification notification)
     {
-        _logger.LogInformation("Publishing home run modified {Hash} for game {GameId}", notification.HomeRunHash,
+        _logger.LogInformation("Publishing scoring play modified {Hash} for game {GameId}", notification.HomeRunHash,
             notification.GameId.ToString());
         
         await _hubContext.Clients.All.SendAsync("UpdateHomeRun", JsonConvert.SerializeObject(notification));
         
-        _logger.LogInformation("Finished publishing home run modified {Hash} for game {GameId}", notification.HomeRunHash,
+        _logger.LogInformation("Finished publishing scoring play modified {Hash} for game {GameId}", notification.HomeRunHash,
             notification.GameId.ToString());
     }
 }

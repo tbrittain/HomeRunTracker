@@ -12,22 +12,22 @@ public class HttpService : IHttpService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<List<HomeRunRecord>> GetHomeRunsAsync(DateTime? dateTime)
+    public async Task<List<ScoringPlayRecord>> GetScoringPlaysAsync(DateTime? dateTime)
     {
         var httpClient = _httpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri("http://localhost:5001");
 
         var endpoint = dateTime.HasValue
-            ? $"/api/home-runs?date={dateTime.Value:yyyy-MM-dd}"
-            : "/api/home-runs";
+            ? $"/api/scoring-plays?date={dateTime.Value:yyyy-MM-dd}"
+            : "/api/scoring-plays";
 
         var response = await httpClient.GetAsync(endpoint);
         response.EnsureSuccessStatusCode();
         
         var content = await response.Content.ReadAsStringAsync();
-        var homeRuns = JsonConvert.DeserializeObject<List<HomeRunRecord>>(content);
+        var homeRuns = JsonConvert.DeserializeObject<List<ScoringPlayRecord>>(content);
         if (homeRuns is null)
-            throw new InvalidOperationException("Unable to deserialize home runs");
+            throw new InvalidOperationException("Unable to deserialize scoring plays");
         
         return homeRuns;
     }

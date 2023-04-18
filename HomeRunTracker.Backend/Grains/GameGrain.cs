@@ -13,7 +13,7 @@ namespace HomeRunTracker.Backend.Grains;
 // ReSharper disable once UnusedType.Global
 public class GameGrain : Grain, IGameGrain
 {
-    private readonly HashSet<HomeRunRecord> _homeRuns = new();
+    private readonly HashSet<ScoringPlayRecord> _scoringPlays = new();
     private readonly IHttpService _httpService;
     private readonly ILogger<GameGrain> _logger;
     private readonly LeverageIndexService _leverageIndexService;
@@ -32,7 +32,7 @@ public class GameGrain : Grain, IGameGrain
         _leverageIndexService = leverageIndexService;
     }
 
-    private List<string> HomeRunHashes => _homeRuns.Select(x => x.Hash).ToList();
+    private List<string> ScoringPlayHashes => _scoringPlays.Select(x => x.Hash).ToList();
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
@@ -100,19 +100,19 @@ public class GameGrain : Grain, IGameGrain
             }
         }
 
-        var homeRuns = gameDetails.LiveData.Plays.AllPlays
-            .Where(p => p.Result.Result is EPlayResult.HomeRun)
+        var scoringPlays = gameDetails.LiveData.Plays.AllPlays
+            .Where(p => p.Result.Rbi > 0)
             .ToList();
 
-        var tasks = homeRuns
-            .Where(homeRun =>
+        var tasks = scoringPlays
+            .Where(play =>
             {
                 if (_isInitialLoad) return true;
 
-                var hash = HomeRunRecord.GetHash(homeRun.Result.Description, _gameId);
-                return !HomeRunHashes.Contains(hash);
+                var hash = ScoringPlayRecord.GetHash(play.Result.Description, _gameId);
+                return !ScoringPlayHashes.Contains(hash);
             })
-            .Select(ValidateHomeRun)
+            .Select(ValidateScoringPlay)
             .ToList();
         await Task.WhenAll(tasks);
 
@@ -133,49 +133,50 @@ public class GameGrain : Grain, IGameGrain
         await _mediator.Publish(new GameStoppedNotification(_gameId));
     }
 
-    public Task<List<HomeRunRecord>> GetHomeRuns()
+    public Task<List<ScoringPlayRecord>> GetScoringPlays()
     {
-        _logger.LogInformation("Getting home runs for game {GameId}", _gameId.ToString());
-        return Task.FromResult(_homeRuns.ToList());
+        _logger.LogInformation("Getting scoring plays for game {GameId}", _gameId.ToString());
+        return Task.FromResult(_scoringPlays.ToList());
     }
 
-    private async Task ValidateHomeRun(MlbPlay play)
+    private async Task ValidateScoringPlay(MlbPlay play)
     {
-        var descriptionHashString = HomeRunRecord.GetHash(play.Result.Description, _gameId);
+        var descriptionHashString = ScoringPlayRecord.GetHash(play.Result.Description, _gameId);
 
-        var homeRunEvent = play.Events.Single(e => e.HitData is not null);
-        Debug.Assert(homeRunEvent is not null, nameof(homeRunEvent) + " is not null");
+        var scoringPlayEvent = play.Events.SingleOrDefault(e => e.HitData is not null) ?? play.Events.Last();
+
+        Debug.Assert(scoringPlayEvent is not null, nameof(scoringPlayEvent) + " is not null");
 
         var highlightUrl = (_gameContent.HighlightsOverview?.Highlights?.Items ?? new List<HighlightItem>())
-            .FirstOrDefault(item => item.Guid is not null && item.Guid == homeRunEvent.PlayId)
+            .FirstOrDefault(item => item.Guid is not null && item.Guid == scoringPlayEvent.PlayId)
             ?.Playbacks.FirstOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
             ?.Url;
 
-        if (HomeRunHashes.Contains(descriptionHashString))
+        if (ScoringPlayHashes.Contains(descriptionHashString))
         {
-            _logger.LogDebug("Home run {Hash} has already been published", descriptionHashString);
+            _logger.LogDebug("Scoring play {Hash} has already been published", descriptionHashString);
 
-            var existingHomeRun = _homeRuns.Single(hr => hr.Hash == descriptionHashString);
-            if (highlightUrl is null || existingHomeRun.HighlightUrl == highlightUrl) return;
+            var existingScoringPlay = _scoringPlays.Single(p => p.Hash == descriptionHashString);
+            if (highlightUrl is null || existingScoringPlay.HighlightUrl == highlightUrl) return;
 
-            _logger.LogInformation("Home run {Hash} has a new highlight URL", descriptionHashString);
-            existingHomeRun.HighlightUrl = highlightUrl;
+            _logger.LogInformation("Scoring play {Hash} has a new highlight URL", descriptionHashString);
+            existingScoringPlay.HighlightUrl = highlightUrl;
             if (!_isInitialLoad)
             {
-                await _mediator.Publish(new HomeRunUpdatedNotification(descriptionHashString, _gameId,
+                await _mediator.Publish(new ScoringPlayUpdatedNotification(descriptionHashString, _gameId,
                     _gameDetails.GameData.GameDateTime.DateTimeOffset, highlightUrl));
             }
 
             return;
         }
 
-        _logger.LogInformation("Game {GameId} has a new home run with hash {Hash}", _gameId.ToString(),
+        _logger.LogInformation("Game {GameId} has a new scoring play with hash {Hash}", _gameId.ToString(),
             descriptionHashString);
 
         var (batterTeamId, pitcherTeamId, batterTeamName, pitcherTeamName, isTopInning) =
             new PlayTeams(play, _gameDetails);
 
-        var homeRunRecord = new HomeRunRecord
+        var scoringPlayRecord = new ScoringPlayRecord
         {
             Hash = descriptionHashString,
             GameId = _gameId,
@@ -184,9 +185,9 @@ public class GameGrain : Grain, IGameGrain
             BatterName = play.PlayerMatchup.Batter.FullName,
             Description = play.Result.Description,
             Rbi = play.Result.Rbi,
-            LaunchSpeed = homeRunEvent.HitData!.LaunchSpeed,
-            LaunchAngle = homeRunEvent.HitData!.LaunchAngle,
-            TotalDistance = homeRunEvent.HitData!.TotalDistance,
+            LaunchSpeed = scoringPlayEvent.HitData?.LaunchSpeed ?? 0,
+            LaunchAngle = scoringPlayEvent.HitData?.LaunchAngle ?? 0,
+            TotalDistance = scoringPlayEvent.HitData?.TotalDistance ?? 0,
             Inning = play.About.Inning,
             IsTopInning = isTopInning,
             PitcherId = play.PlayerMatchup.Pitcher.Id,
@@ -196,13 +197,14 @@ public class GameGrain : Grain, IGameGrain
             TeamName = batterTeamName,
             TeamNameAgainstId = pitcherTeamId,
             TeamNameAgainst = pitcherTeamName,
-            LeverageIndex = _leverageIndexService.GetLeverageIndex(play)
+            LeverageIndex = _leverageIndexService.GetLeverageIndex(play),
+            PlayResult = play.Result.Result
         };
 
-        _homeRuns.Add(homeRunRecord);
+        _scoringPlays.Add(scoringPlayRecord);
         if (!_isInitialLoad)
         {
-            await _mediator.Publish(new HomeRunNotification(_gameId, _gameDetails.GameData.GameDateTime.DateTimeOffset, homeRunRecord));
+            await _mediator.Publish(new ScoringPlayNotification(_gameId, _gameDetails.GameData.GameDateTime.DateTimeOffset, scoringPlayRecord));
         }
     }
 }

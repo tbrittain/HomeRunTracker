@@ -1,7 +1,7 @@
 ﻿@using HomeRunTracker.Frontend.Services.HttpService
 @using HomeRunTracker.Frontend.Services
 @inject IHttpService HttpService
-@inject HomeRunHubService HomeRunHubService
+@inject ScoringPlayHubService ScoringPlayHubService
 @inject TimezoneService TimezoneService
 
 <div>
@@ -14,6 +14,23 @@
         </div>
     }
 
+    <div>
+        <input type="radio"
+               id="home_runs"
+               name="home_runs_toggle"
+               value="hr"
+               checked="@OnlyShowHomeRuns"
+               @onchange="(() => OnlyShowHomeRuns = true)">
+        <label for="home_runs">Only home runs</label><br>
+        <input type="radio"
+               id="all"
+               name="all_scoring_plays_toggle"
+               value="all"
+               checked="@(!OnlyShowHomeRuns)"
+               @onchange="(() => OnlyShowHomeRuns = false)">
+        <label for="all">All scoring plays</label><br>
+    </div>
+
     <QuickGrid Items="@_items" ResizableColumns="true" class="table bg-black text-light">
         <TemplateColumn>
             <img src="@context.BatterImageUrl" alt="@context.BatterName" width="30" style="border-radius: 15px"/>
@@ -22,6 +39,12 @@
         <TemplateColumn Title="Team" Sortable="true" SortBy="_teamSort">
             <img src="@context.BatterTeamImageUrl" alt="@context.TeamName" width="30" style="border-radius: 100%"/>
         </TemplateColumn>
+        @if (!OnlyShowHomeRuns)
+        {
+            <TemplateColumn Title="Result" Sortable="true" SortBy="_playResultSort">
+                <p>@context.Result.ToString()</p>
+            </TemplateColumn>
+        }
         <TemplateColumn
             Title="Distance"
             Sortable="true"

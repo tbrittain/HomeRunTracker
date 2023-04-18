@@ -143,7 +143,13 @@ public class GameGrain : Grain, IGameGrain
     {
         var descriptionHashString = ScoringPlayRecord.GetHash(play.Result.Description, _gameId);
 
-        var scoringPlayEvent = play.Events.Single(e => e.HitData is not null);
+        var scoringPlayEvent = play.Events.SingleOrDefault(e => e.HitData is not null);
+
+        if (scoringPlayEvent is null)
+        {
+            scoringPlayEvent = play.Events.Last();
+        }
+
         Debug.Assert(scoringPlayEvent is not null, nameof(scoringPlayEvent) + " is not null");
 
         var highlightUrl = (_gameContent.HighlightsOverview?.Highlights?.Items ?? new List<HighlightItem>())
@@ -155,11 +161,11 @@ public class GameGrain : Grain, IGameGrain
         {
             _logger.LogDebug("Scoring play {Hash} has already been published", descriptionHashString);
 
-            var existingHomeRun = _scoringPlays.Single(hr => hr.Hash == descriptionHashString);
-            if (highlightUrl is null || existingHomeRun.HighlightUrl == highlightUrl) return;
+            var existingScoringPlay = _scoringPlays.Single(p => p.Hash == descriptionHashString);
+            if (highlightUrl is null || existingScoringPlay.HighlightUrl == highlightUrl) return;
 
             _logger.LogInformation("Scoring play {Hash} has a new highlight URL", descriptionHashString);
-            existingHomeRun.HighlightUrl = highlightUrl;
+            existingScoringPlay.HighlightUrl = highlightUrl;
             if (!_isInitialLoad)
             {
                 await _mediator.Publish(new ScoringPlayUpdatedNotification(descriptionHashString, _gameId,
@@ -184,9 +190,9 @@ public class GameGrain : Grain, IGameGrain
             BatterName = play.PlayerMatchup.Batter.FullName,
             Description = play.Result.Description,
             Rbi = play.Result.Rbi,
-            LaunchSpeed = scoringPlayEvent.HitData!.LaunchSpeed,
-            LaunchAngle = scoringPlayEvent.HitData!.LaunchAngle,
-            TotalDistance = scoringPlayEvent.HitData!.TotalDistance,
+            LaunchSpeed = scoringPlayEvent.HitData?.LaunchSpeed ?? 0,
+            LaunchAngle = scoringPlayEvent.HitData?.LaunchAngle ?? 0,
+            TotalDistance = scoringPlayEvent.HitData?.TotalDistance ?? 0,
             Inning = play.About.Inning,
             IsTopInning = isTopInning,
             PitcherId = play.PlayerMatchup.Pitcher.Id,

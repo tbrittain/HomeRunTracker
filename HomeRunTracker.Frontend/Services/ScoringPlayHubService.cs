@@ -28,7 +28,7 @@ public class ScoringPlayHubService
             var homeRun = JsonConvert.DeserializeObject<ScoringPlayNotification>(json);
             if (homeRun is null)
             {
-                throw new InvalidOperationException("Home run is null");
+                throw new InvalidOperationException("Scoring play is null");
             }
 
             OnScoringPlayReceived?.Invoke(homeRun);
@@ -39,7 +39,7 @@ public class ScoringPlayHubService
             var notification = JsonConvert.DeserializeObject<ScoringPlayUpdatedNotification>(json);
             if (notification is null)
             {
-                throw new InvalidOperationException("Home run update notification is null");
+                throw new InvalidOperationException("Scoring play update notification is null");
             }
             
             OnScoringPlayUpdated?.Invoke(notification);

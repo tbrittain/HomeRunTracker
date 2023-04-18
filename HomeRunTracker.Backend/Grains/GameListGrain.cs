@@ -75,23 +75,23 @@ public class GameListGrain : Grain, IGameListGrain
 
     public async Task PublishScoringPlay(ScoringPlayNotification notification)
     {
-        _logger.LogInformation("Publishing home run {Hash} for game {GameId}", notification.ScoringPlay.Hash,
+        _logger.LogInformation("Publishing scoring play {Hash} for game {GameId}", notification.ScoringPlay.Hash,
             notification.GameId.ToString());
 
         await _hubContext.Clients.All.SendAsync("ReceiveHomeRun", JsonConvert.SerializeObject(notification));
 
-        _logger.LogInformation("Finished publishing home run {Hash} for game {GameId}", notification.ScoringPlay.Hash,
+        _logger.LogInformation("Finished publishing scoring play {Hash} for game {GameId}", notification.ScoringPlay.Hash,
             notification.GameId.ToString());
     }
 
     public async Task PublishScoringPlayUpdated(ScoringPlayUpdatedNotification notification)
     {
-        _logger.LogInformation("Publishing home run modified {Hash} for game {GameId}", notification.HomeRunHash,
+        _logger.LogInformation("Publishing scoring play modified {Hash} for game {GameId}", notification.HomeRunHash,
             notification.GameId.ToString());
         
         await _hubContext.Clients.All.SendAsync("UpdateHomeRun", JsonConvert.SerializeObject(notification));
         
-        _logger.LogInformation("Finished publishing home run modified {Hash} for game {GameId}", notification.HomeRunHash,
+        _logger.LogInformation("Finished publishing scoring play modified {Hash} for game {GameId}", notification.HomeRunHash,
             notification.GameId.ToString());
     }
 }

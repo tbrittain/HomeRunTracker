@@ -3,13 +3,13 @@
 public enum EPlayResult
 {
     Unknown,
+    Strikeout,
     Walk,
     FieldOut,
     ForceOut,
-    Strikeout,
+    SacrificeFly,
     Single,
     Double,
     Triple,
     HomeRun,
-    SacrificeFly
 }

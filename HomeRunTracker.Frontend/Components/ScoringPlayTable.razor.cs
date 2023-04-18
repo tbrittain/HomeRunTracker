@@ -9,10 +9,10 @@ using Microsoft.AspNetCore.Components.QuickGrid;
 
 namespace HomeRunTracker.Frontend.Components;
 
-public partial class HomeRunTable
+public partial class ScoringPlayTable
 {
     private IQueryable<ScoringPlayModel> _items = null!;
-    private HashSet<ScoringPlayModel> _homeRuns = new();
+    private HashSet<ScoringPlayModel> _scoringPlays = new();
     private bool _isLoading;
     
     private readonly GridSort<ScoringPlayModel> _teamSort = 
@@ -32,6 +32,9 @@ public partial class HomeRunTable
 
     private readonly GridSort<ScoringPlayModel> _dateTimeOffsetSort =
         GridSort<ScoringPlayModel>.ByDescending(x => x.DateTimeOffset);
+    
+    private readonly GridSort<ScoringPlayModel> _playResultSort = 
+        GridSort<ScoringPlayModel>.ByDescending(x => x.PlayResult);
 
     [CascadingParameter] public IModalService Modal { get; set; } = default!;
 
@@ -52,14 +55,14 @@ public partial class HomeRunTable
         _isLoading = true;
         await InvokeAsync(StateHasChanged);
 
-        _homeRuns.Clear();
+        _scoringPlays.Clear();
         _items = new List<ScoringPlayModel>().AsQueryable();
 
-        var homeRunDtos = await HttpService.GetHomeRunsAsync(DateTime == DateTime.Today ? null : DateTime.Date);
-        var homeRuns = homeRunDtos
+        var scoringPlayDtos = await HttpService.GetScoringPlaysAsync(DateTime == DateTime.Today ? null : DateTime.Date);
+        var scoringPlays = scoringPlayDtos
             .Select(x => x.Adapt<ScoringPlayModel>()).ToList();
-        _homeRuns = homeRuns.ToHashSet();
-        _items = _homeRuns.AsQueryable();
+        _scoringPlays = scoringPlays.ToHashSet();
+        _items = _scoringPlays.AsQueryable();
 
         _isLoading = false;
         await InvokeAsync(StateHasChanged);
@@ -82,7 +85,7 @@ public partial class HomeRunTable
             return;
         }
 
-        var homeRun = _homeRuns.Single(_ => _.Hash == arg.HomeRunHash);
+        var homeRun = _scoringPlays.Single(_ => _.Hash == arg.HomeRunHash);
         homeRun.HighlightUrl = arg.HighlightUrl;
 
         await InvokeAsync(StateHasChanged);
@@ -97,8 +100,8 @@ public partial class HomeRunTable
 
         var homeRunDto = arg.ScoringPlay;
         var homeRun = homeRunDto.Adapt<ScoringPlayModel>();
-        _homeRuns.Add(homeRun);
-        _items = _homeRuns.AsQueryable();
+        _scoringPlays.Add(homeRun);
+        _items = _scoringPlays.AsQueryable();
 
         await InvokeAsync(StateHasChanged);
     }

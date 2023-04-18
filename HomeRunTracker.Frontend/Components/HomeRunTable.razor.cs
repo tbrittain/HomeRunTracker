@@ -11,27 +11,27 @@ namespace HomeRunTracker.Frontend.Components;
 
 public partial class HomeRunTable
 {
-    private IQueryable<HomeRunModel> _items = null!;
-    private HashSet<HomeRunModel> _homeRuns = new();
+    private IQueryable<ScoringPlayModel> _items = null!;
+    private HashSet<ScoringPlayModel> _homeRuns = new();
     private bool _isLoading;
     
-    private readonly GridSort<HomeRunModel> _teamSort = 
-        GridSort<HomeRunModel>.ByAscending(x => x.TeamName);
+    private readonly GridSort<ScoringPlayModel> _teamSort = 
+        GridSort<ScoringPlayModel>.ByAscending(x => x.TeamName);
     
-    private readonly GridSort<HomeRunModel> _distanceSort = 
-        GridSort<HomeRunModel>.ByAscending(x => x.TotalDistance);
+    private readonly GridSort<ScoringPlayModel> _distanceSort = 
+        GridSort<ScoringPlayModel>.ByAscending(x => x.TotalDistance);
     
-    private readonly GridSort<HomeRunModel> _exitVelocitySort = 
-        GridSort<HomeRunModel>.ByDescending(x => x.LaunchSpeed);
+    private readonly GridSort<ScoringPlayModel> _exitVelocitySort = 
+        GridSort<ScoringPlayModel>.ByDescending(x => x.LaunchSpeed);
     
-    private readonly GridSort<HomeRunModel> _launchAngleSort = 
-        GridSort<HomeRunModel>.ByDescending(x => x.LaunchAngle);
+    private readonly GridSort<ScoringPlayModel> _launchAngleSort = 
+        GridSort<ScoringPlayModel>.ByDescending(x => x.LaunchAngle);
 
-    private readonly GridSort<HomeRunModel> _leverageIndexSort =
-        GridSort<HomeRunModel>.ByDescending(x => x.LeverageIndex);
+    private readonly GridSort<ScoringPlayModel> _leverageIndexSort =
+        GridSort<ScoringPlayModel>.ByDescending(x => x.LeverageIndex);
 
-    private readonly GridSort<HomeRunModel> _dateTimeOffsetSort =
-        GridSort<HomeRunModel>.ByDescending(x => x.DateTimeOffset);
+    private readonly GridSort<ScoringPlayModel> _dateTimeOffsetSort =
+        GridSort<ScoringPlayModel>.ByDescending(x => x.DateTimeOffset);
 
     [CascadingParameter] public IModalService Modal { get; set; } = default!;
 
@@ -41,10 +41,10 @@ public partial class HomeRunTable
 
     protected override async Task OnInitializedAsync()
     {
-        await HomeRunHubService.StartHubConnection();
-        HomeRunHubService.SubscribeToHubMethods();
-        HomeRunHubService.OnHomeRunReceived += OnHomeRunReceived;
-        HomeRunHubService.OnHomeRunUpdated += OnHomeRunUpdated;
+        await ScoringPlayHubService.StartHubConnection();
+        ScoringPlayHubService.SubscribeToHubMethods();
+        ScoringPlayHubService.OnScoringPlayReceived += OnScoringPlayReceived;
+        ScoringPlayHubService.OnScoringPlayUpdated += OnScoringPlayUpdated;
     }
 
     protected override async Task OnParametersSetAsync()
@@ -53,11 +53,11 @@ public partial class HomeRunTable
         await InvokeAsync(StateHasChanged);
 
         _homeRuns.Clear();
-        _items = new List<HomeRunModel>().AsQueryable();
+        _items = new List<ScoringPlayModel>().AsQueryable();
 
         var homeRunDtos = await HttpService.GetHomeRunsAsync(DateTime == DateTime.Today ? null : DateTime.Date);
         var homeRuns = homeRunDtos
-            .Select(x => x.Adapt<HomeRunModel>()).ToList();
+            .Select(x => x.Adapt<ScoringPlayModel>()).ToList();
         _homeRuns = homeRuns.ToHashSet();
         _items = _homeRuns.AsQueryable();
 
@@ -75,7 +75,7 @@ public partial class HomeRunTable
         await base.OnAfterRenderAsync(firstRender);
     }
 
-    private async Task OnHomeRunUpdated(ScoringPlayUpdatedNotification arg)
+    private async Task OnScoringPlayUpdated(ScoringPlayUpdatedNotification arg)
     {
         if (arg.GameStartTime.Date != DateTime.Date)
         {
@@ -88,7 +88,7 @@ public partial class HomeRunTable
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task OnHomeRunReceived(ScoringPlayNotification arg)
+    private async Task OnScoringPlayReceived(ScoringPlayNotification arg)
     {
         if (arg.GameStartTime.Date != DateTime.Date)
         {
@@ -96,14 +96,14 @@ public partial class HomeRunTable
         }
 
         var homeRunDto = arg.ScoringPlay;
-        var homeRun = homeRunDto.Adapt<HomeRunModel>();
+        var homeRun = homeRunDto.Adapt<ScoringPlayModel>();
         _homeRuns.Add(homeRun);
         _items = _homeRuns.AsQueryable();
 
         await InvokeAsync(StateHasChanged);
     }
 
-    private void OnVideoButtonClicked(HomeRunModel model)
+    private void OnVideoButtonClicked(ScoringPlayModel model)
     {
         var header = model.Description;
         var videoSrc = model.HighlightUrl!;

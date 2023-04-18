@@ -4,14 +4,14 @@ using Newtonsoft.Json;
 
 namespace HomeRunTracker.Frontend.Services;
 
-public class HomeRunHubService
+public class ScoringPlayHubService
 {
     private readonly HubConnection _hubConnection;
 
-    public HomeRunHubService()
+    public ScoringPlayHubService()
     {
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl("http://localhost:5001/home-run-hub")
+            .WithUrl("http://localhost:5001/scoring-play-hub")
             .WithAutomaticReconnect()
             .Build();
     }
@@ -23,7 +23,7 @@ public class HomeRunHubService
 
     public void SubscribeToHubMethods()
     {
-        _hubConnection.On<string>("ReceiveHomeRun", json =>
+        _hubConnection.On<string>("ReceiveScoringPlay", json =>
         {
             var homeRun = JsonConvert.DeserializeObject<ScoringPlayNotification>(json);
             if (homeRun is null)
@@ -31,10 +31,10 @@ public class HomeRunHubService
                 throw new InvalidOperationException("Home run is null");
             }
 
-            OnHomeRunReceived?.Invoke(homeRun);
+            OnScoringPlayReceived?.Invoke(homeRun);
         });
 
-        _hubConnection.On<string>("UpdateHomeRun", json =>
+        _hubConnection.On<string>("UpdateScoringPlay", json =>
         {
             var notification = JsonConvert.DeserializeObject<ScoringPlayUpdatedNotification>(json);
             if (notification is null)
@@ -42,11 +42,11 @@ public class HomeRunHubService
                 throw new InvalidOperationException("Home run update notification is null");
             }
             
-            OnHomeRunUpdated?.Invoke(notification);
+            OnScoringPlayUpdated?.Invoke(notification);
         });
     }
 
-    public event Func<ScoringPlayNotification, Task>? OnHomeRunReceived;
+    public event Func<ScoringPlayNotification, Task>? OnScoringPlayReceived;
     
-    public event Func<ScoringPlayUpdatedNotification, Task>? OnHomeRunUpdated;
+    public event Func<ScoringPlayUpdatedNotification, Task>? OnScoringPlayUpdated;
 }

@@ -54,12 +54,12 @@ builder.Services.AddHostedService<MlbCurrentDayGamePollingService>(p =>
 
 var app = builder.Build();
 
-app.MapHub<ScoringPlayHub>("home-run-hub");
-app.MapGet("api/home-runs", async (IClusterClient client, DateTime? date) =>
+app.MapHub<ScoringPlayHub>("scoring-play-hub");
+app.MapGet("api/scoring-plays", async (IClusterClient client, DateTime? date) =>
 {
     var grain = client.GetGrain<IGameListGrain>(0);
-    var homeRuns = await grain.GetHomeRuns(date ?? DateTime.Now);
-    return Results.Ok(homeRuns);
+    var scoringPlays = await grain.GetScoringPlays(date ?? DateTime.Now);
+    return Results.Ok(scoringPlays);
 });
 
 if (app.Environment.IsDevelopment())

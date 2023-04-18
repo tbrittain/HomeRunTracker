@@ -27,9 +27,9 @@ public class GameListGrain : Grain, IGameListGrain
         _httpService = httpService;
     }
 
-    public async Task<List<ScoringPlayRecord>> GetHomeRuns(DateTime dateTime)
+    public async Task<List<ScoringPlayRecord>> GetScoringPlays(DateTime dateTime)
     {
-        _logger.LogInformation("Getting all home runs");
+        _logger.LogInformation("Getting all scoring plays for {Date}", dateTime.ToString("yyyy-MM-dd"));
         var pollingService = _serviceProvider.GetService<MlbCurrentDayGamePollingService>();
         if (pollingService is null)
             throw new InvalidOperationException("MlbApiPollingService not found");
@@ -60,7 +60,7 @@ public class GameListGrain : Grain, IGameListGrain
             .ToList();
 
         var tasks = gameGrains
-            .Select(grain => grain.GetHomeRuns())
+            .Select(grain => grain.GetScoringPlays())
             .ToList();
 
         await Task.WhenAll(tasks);
@@ -73,7 +73,7 @@ public class GameListGrain : Grain, IGameListGrain
         return allHomeRuns;
     }
 
-    public async Task PublishHomeRun(ScoringPlayNotification notification)
+    public async Task PublishScoringPlay(ScoringPlayNotification notification)
     {
         _logger.LogInformation("Publishing home run {Hash} for game {GameId}", notification.ScoringPlay.Hash,
             notification.GameId.ToString());
@@ -84,7 +84,7 @@ public class GameListGrain : Grain, IGameListGrain
             notification.GameId.ToString());
     }
 
-    public async Task PublishHomeRunUpdated(ScoringPlayUpdatedNotification notification)
+    public async Task PublishScoringPlayUpdated(ScoringPlayUpdatedNotification notification)
     {
         _logger.LogInformation("Publishing home run modified {Hash} for game {GameId}", notification.HomeRunHash,
             notification.GameId.ToString());

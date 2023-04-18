@@ -16,6 +16,6 @@ public class HomeRunUpdatedHandler : INotificationHandler<ScoringPlayUpdatedNoti
     public Task Handle(ScoringPlayUpdatedNotification notification, CancellationToken cancellationToken)
     {
         var gameListGrain = _clusterClient.GetGrain<IGameListGrain>(0);
-        return gameListGrain.PublishHomeRunUpdated(notification);
+        return gameListGrain.PublishScoringPlayUpdated(notification);
     }
 }

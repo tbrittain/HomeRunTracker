@@ -133,9 +133,9 @@ public class GameGrain : Grain, IGameGrain
         await _mediator.Publish(new GameStoppedNotification(_gameId));
     }
 
-    public Task<List<ScoringPlayRecord>> GetHomeRuns()
+    public Task<List<ScoringPlayRecord>> GetScoringPlays()
     {
-        _logger.LogInformation("Getting home runs for game {GameId}", _gameId.ToString());
+        _logger.LogInformation("Getting scoring plays for game {GameId}", _gameId.ToString());
         return Task.FromResult(_scoringPlays.ToList());
     }
 

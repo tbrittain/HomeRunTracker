@@ -34,24 +34,4 @@ public record MlbPlay
     [JsonProperty("count")]
     [Id(6)]
     public MlbPlayCount Count { get; set; } = new();
-    
-    public (int homeScoreStart, int awayScoreStart) GetScoreStart()
-    {
-        var homeScoreStart = Result.HomeScore;
-        var awayScoreStart = Result.AwayScore;
-
-        var isTopInning = About.IsTopInning;
-
-        if (Result.Rbi <= 0) return (homeScoreStart, awayScoreStart);
-        if (isTopInning)
-        {
-            awayScoreStart -= Result.Rbi;
-        }
-        else
-        {
-            homeScoreStart -= Result.Rbi;
-        }
-
-        return (homeScoreStart, awayScoreStart);
-    }
 }

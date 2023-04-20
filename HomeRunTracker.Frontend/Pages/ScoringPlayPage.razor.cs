@@ -15,6 +15,8 @@ public partial class ScoringPlayPage
     private IQueryable<ScoringPlayModel> _items = null!;
     private HashSet<ScoringPlayModel> _scoringPlays = new();
     private bool _isLoading;
+    private TimeSpan _localOffset = TimeSpan.Zero;
+    private bool _onlyShowHomeRuns = true;
     
     private readonly GridSort<ScoringPlayModel> _teamSort = 
         GridSort<ScoringPlayModel>.ByAscending(x => x.TeamName);
@@ -65,9 +67,6 @@ public partial class ScoringPlayPage
             _items = _scoringPlays.AsQueryable();
         }
     }
-
-    private TimeSpan _localOffset = TimeSpan.Zero;
-    private bool _onlyShowHomeRuns = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -142,5 +141,12 @@ public partial class ScoringPlayPage
         };
         
         Modal.Show<VideoPlayer>("", parameters, options);
+    }
+
+    public void Dispose()
+    {
+        ScoringPlayHubService.OnScoringPlayReceived -= OnScoringPlayReceived;
+        ScoringPlayHubService.OnScoringPlayUpdated -= OnScoringPlayUpdated;
+        GC.SuppressFinalize(this);
     }
 }

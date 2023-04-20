@@ -1,0 +1,13 @@
+﻿@using HomeRunTracker.Frontend.Services.HttpService
+@using HomeRunTracker.Frontend.Services
+@inject IHttpService HttpService
+@inject ScoringPlayHubService ScoringPlayHubService
+@implements IDisposable
+@page "/game-score"
+
+<div>
+    @if (_isLoading)
+    {
+        <LoadingSpinner />
+    }
+</div>

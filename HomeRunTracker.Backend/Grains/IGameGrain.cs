@@ -8,4 +8,5 @@ public interface IGameGrain : IGrainWithIntegerKey
     Task<MlbGameDetails> GetGame();
     Task Stop();
     Task<List<ScoringPlayRecord>> GetScoringPlays();
+    Task<List<GameScoreRecord>> GetGameScores();
 }

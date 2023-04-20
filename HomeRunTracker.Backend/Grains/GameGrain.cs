@@ -14,22 +14,26 @@ namespace HomeRunTracker.Backend.Grains;
 public class GameGrain : Grain, IGameGrain
 {
     private readonly HashSet<ScoringPlayRecord> _scoringPlays = new();
+    private readonly HashSet<GameScoreRecord> _gameScores = new();
     private readonly IHttpService _httpService;
     private readonly ILogger<GameGrain> _logger;
     private readonly LeverageIndexService _leverageIndexService;
+    private readonly GameScoreService _gameScoreService;
     private readonly IMediator _mediator;
     private MlbGameDetails _gameDetails = new();
     private MlbGameContent _gameContent = new();
+    private DateTimeOffset _gameStartTime = DateTimeOffset.MinValue;
     private int _gameId;
     private bool _isInitialLoad = true;
 
     public GameGrain(ILogger<GameGrain> logger, IMediator mediator, IHttpService httpService,
-        LeverageIndexService leverageIndexService)
+        LeverageIndexService leverageIndexService, GameScoreService gameScoreService)
     {
         _logger = logger;
         _mediator = mediator;
         _httpService = httpService;
         _leverageIndexService = leverageIndexService;
+        _gameScoreService = gameScoreService;
     }
 
     private List<string> ScoringPlayHashes => _scoringPlays.Select(x => x.Hash).ToList();
@@ -78,6 +82,7 @@ public class GameGrain : Grain, IGameGrain
 
         _gameDetails = gameDetails;
         _gameContent = gameContent;
+        _gameStartTime = _gameDetails.GameData.GameDateTime.DateTimeOffset;
 
         if (!_isInitialLoad)
         {
@@ -116,6 +121,25 @@ public class GameGrain : Grain, IGameGrain
             .ToList();
         await Task.WhenAll(tasks);
 
+        var gameScores = _gameScoreService.GetGameScores(_gameDetails);
+        foreach (var gameScore in gameScores)
+        {
+            var existingGameScore = _gameScores.FirstOrDefault(x =>
+                x.TeamId == gameScore.TeamId && x.PitcherId == gameScore.PitcherId);
+            if (existingGameScore == null)
+            {
+                _gameScores.Add(gameScore);
+                await _mediator.Publish(new GameScoreNotification(_gameId, _gameStartTime, gameScore));
+                return;
+            }
+
+            if (existingGameScore == gameScore) return;
+
+            _gameScores.Remove(existingGameScore);
+            _gameScores.Add(gameScore);
+            await _mediator.Publish(new GameScoreNotification(_gameId, _gameStartTime, gameScore));
+        }
+
         _isInitialLoad = false;
     }
 
@@ -137,6 +161,12 @@ public class GameGrain : Grain, IGameGrain
     {
         _logger.LogInformation("Getting scoring plays for game {GameId}", _gameId.ToString());
         return Task.FromResult(_scoringPlays.ToList());
+    }
+
+    public Task<List<GameScoreRecord>> GetGameScores()
+    {
+        _logger.LogInformation("Getting game scores for game {GameId}", _gameId.ToString());
+        return Task.FromResult(_gameScores.ToList());
     }
 
     private async Task ValidateScoringPlay(MlbPlay play)
@@ -164,7 +194,7 @@ public class GameGrain : Grain, IGameGrain
             if (!_isInitialLoad)
             {
                 await _mediator.Publish(new ScoringPlayUpdatedNotification(descriptionHashString, _gameId,
-                    _gameDetails.GameData.GameDateTime.DateTimeOffset, highlightUrl));
+                    _gameStartTime, highlightUrl));
             }
 
             return;
@@ -204,7 +234,7 @@ public class GameGrain : Grain, IGameGrain
         _scoringPlays.Add(scoringPlayRecord);
         if (!_isInitialLoad)
         {
-            await _mediator.Publish(new ScoringPlayNotification(_gameId, _gameDetails.GameData.GameDateTime.DateTimeOffset, scoringPlayRecord));
+            await _mediator.Publish(new ScoringPlayNotification(_gameId, _gameStartTime, scoringPlayRecord));
         }
     }
 }

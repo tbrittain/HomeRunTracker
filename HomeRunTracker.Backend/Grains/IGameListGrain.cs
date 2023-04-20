@@ -9,4 +9,5 @@ public interface IGameListGrain : IGrainWithIntegerKey
     
     Task PublishScoringPlay(ScoringPlayNotification notification);
     Task PublishScoringPlayUpdated(ScoringPlayUpdatedNotification notification);
+    Task PublishGameScore(GameScoreNotification notification);
 }

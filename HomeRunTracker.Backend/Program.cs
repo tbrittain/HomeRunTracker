@@ -43,12 +43,16 @@ builder.WebHost.UseKestrel((ctx, kestrelOptions) =>
 builder.Services.AddHttpClient();
 builder.Services.AddSignalR();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+
 builder.Services.AddScoped<INotificationHandler<GameStoppedNotification>, GameRemovedHandler>();
 builder.Services.AddScoped<INotificationHandler<ScoringPlayNotification>, HomeRunHandler>();
-builder.Services.AddScoped<INotificationHandler<ScoringPlayUpdatedNotification>, HomeRunUpdatedHandler>();
+builder.Services.AddScoped<INotificationHandler<ScoringPlayUpdatedNotification>, ScoringPlayUpdatedHandler>();
+builder.Services.AddScoped<INotificationHandler<GameScoreNotification>, GameScoreHandler>();
+
 builder.Services.AddSingleton<IHttpService, HttpService>();
 builder.Services.AddSingleton<MlbCurrentDayGamePollingService>();
 builder.Services.AddSingleton<LeverageIndexService>();
+builder.Services.AddSingleton<GameScoreService>();
 builder.Services.AddHostedService<MlbCurrentDayGamePollingService>(p =>
     p.GetRequiredService<MlbCurrentDayGamePollingService>());
 

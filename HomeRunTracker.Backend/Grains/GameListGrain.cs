@@ -78,20 +78,29 @@ public class GameListGrain : Grain, IGameListGrain
         _logger.LogInformation("Publishing scoring play {Hash} for game {GameId}", notification.ScoringPlay.Hash,
             notification.GameId.ToString());
 
-        await _hubContext.Clients.All.SendAsync("ReceiveHomeRun", JsonConvert.SerializeObject(notification));
+        await _hubContext.Clients.All.SendAsync("ReceiveScoringPlay", JsonConvert.SerializeObject(notification));
 
-        _logger.LogInformation("Finished publishing scoring play {Hash} for game {GameId}", notification.ScoringPlay.Hash,
-            notification.GameId.ToString());
+        _logger.LogInformation("Finished publishing scoring play {Hash} for game {GameId}",
+            notification.ScoringPlay.Hash, notification.GameId.ToString());
     }
 
     public async Task PublishScoringPlayUpdated(ScoringPlayUpdatedNotification notification)
     {
         _logger.LogInformation("Publishing scoring play modified {Hash} for game {GameId}", notification.HomeRunHash,
             notification.GameId.ToString());
-        
-        await _hubContext.Clients.All.SendAsync("UpdateHomeRun", JsonConvert.SerializeObject(notification));
-        
-        _logger.LogInformation("Finished publishing scoring play modified {Hash} for game {GameId}", notification.HomeRunHash,
-            notification.GameId.ToString());
+
+        await _hubContext.Clients.All.SendAsync("UpdateScoringPlay", JsonConvert.SerializeObject(notification));
+
+        _logger.LogInformation("Finished publishing scoring play modified {Hash} for game {GameId}",
+            notification.HomeRunHash, notification.GameId.ToString());
+    }
+
+    public async Task PublishGameScore(GameScoreNotification notification)
+    {
+        _logger.LogInformation("Publishing game score for game {GameId}", notification.GameId.ToString());
+
+        await _hubContext.Clients.All.SendAsync("ReceiveGameScore", JsonConvert.SerializeObject(notification));
+
+        _logger.LogInformation("Finished publishing game score for game {GameId}", notification.GameId.ToString());
     }
 }

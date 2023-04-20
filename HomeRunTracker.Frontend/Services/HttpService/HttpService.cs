@@ -31,4 +31,24 @@ public class HttpService : IHttpService
         
         return homeRuns;
     }
+
+    public async Task<List<GameScoreRecord>> GetGameScoresAsync(DateTime? dateTime)
+    {
+        var httpClient = _httpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri("http://localhost:5001");
+        
+        var endpoint = dateTime.HasValue
+            ? $"/api/game-scores?date={dateTime.Value:yyyy-MM-dd}"
+            : "/api/game-scores";
+        
+        var response = await httpClient.GetAsync(endpoint);
+        response.EnsureSuccessStatusCode();
+        
+        var content = response.Content.ReadAsStringAsync();
+        var gameScores = JsonConvert.DeserializeObject<List<GameScoreRecord>>(content.Result);
+        if (gameScores is null)
+            throw new InvalidOperationException("Unable to deserialize game scores");
+        
+        return gameScores;
+    }
 }

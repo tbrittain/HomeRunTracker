@@ -28,7 +28,6 @@ public class LeverageIndexService
         var (homeScoreStart, awayScoreStart) = play.GetScoreStart();
         var homeTeamRunDiff = homeScoreStart - awayScoreStart;
 
-        // TODO: May want to revisit this logic
         if (homeTeamRunDiff is > 4 or < -4) return 0.0f;
 
         var isRunnerOnFirst = play.Runners.Any(r => r.Movement.Base is EBase.First);
@@ -50,7 +49,8 @@ public class LeverageIndexService
         if (row is null) return 0.0f;
 
         // Index 8 is the location of the leverage index for a run differential of 0
-        var leverageIndex = float.Parse(row[8 + homeTeamRunDiff].ToString()!) ;
+        var column = row[8 + homeTeamRunDiff];
+        var leverageIndex = float.Parse(column.ToString()!);
 
         return leverageIndex;
     }

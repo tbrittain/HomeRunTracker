@@ -160,14 +160,6 @@ public class ScoringPlayModel
     
     public string LeverageIndexColor => GetColorForLeverageIndex().ToString();
 
-    private readonly record struct RgbColor(byte R, byte G, byte B)
-    {
-        public override string ToString()
-        {
-            return $"rgb({R}, {G}, {B})";
-        }
-    }
-
     private RgbColor GetColorForDistance()
     {
         switch (TotalDistance)

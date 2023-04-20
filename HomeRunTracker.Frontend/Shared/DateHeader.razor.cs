@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
 
-namespace HomeRunTracker.Frontend.Pages;
+namespace HomeRunTracker.Frontend.Shared;
 
-public partial class Index
+public partial class DateHeader
 {
     private bool _isDateGreaterOrEqualToToday = true;
     private DateTime _date = DateTime.Today;

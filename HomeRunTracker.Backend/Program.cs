@@ -43,23 +43,35 @@ builder.WebHost.UseKestrel((ctx, kestrelOptions) =>
 builder.Services.AddHttpClient();
 builder.Services.AddSignalR();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+
 builder.Services.AddScoped<INotificationHandler<GameStoppedNotification>, GameRemovedHandler>();
 builder.Services.AddScoped<INotificationHandler<ScoringPlayNotification>, HomeRunHandler>();
-builder.Services.AddScoped<INotificationHandler<ScoringPlayUpdatedNotification>, HomeRunUpdatedHandler>();
+builder.Services.AddScoped<INotificationHandler<ScoringPlayUpdatedNotification>, ScoringPlayUpdatedHandler>();
+builder.Services.AddScoped<INotificationHandler<GameScoreNotification>, GameScoreHandler>();
+
 builder.Services.AddSingleton<IHttpService, HttpService>();
 builder.Services.AddSingleton<MlbCurrentDayGamePollingService>();
 builder.Services.AddSingleton<LeverageIndexService>();
+builder.Services.AddSingleton<PitcherGameScoreService>();
 builder.Services.AddHostedService<MlbCurrentDayGamePollingService>(p =>
     p.GetRequiredService<MlbCurrentDayGamePollingService>());
 
 var app = builder.Build();
 
 app.MapHub<ScoringPlayHub>("scoring-play-hub");
+
 app.MapGet("api/scoring-plays", async (IClusterClient client, DateTime? date) =>
 {
     var grain = client.GetGrain<IGameListGrain>(0);
     var scoringPlays = await grain.GetScoringPlays(date ?? DateTime.Now);
     return Results.Ok(scoringPlays);
+});
+
+app.MapGet("api/game-scores", async (IClusterClient client, DateTime? date) =>
+{
+    var grain = client.GetGrain<IGameListGrain>(0);
+    var gameScores = await grain.GetGameScores(date ?? DateTime.Now);
+    return Results.Ok(gameScores);
 });
 
 if (app.Environment.IsDevelopment())

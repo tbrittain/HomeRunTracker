@@ -3,6 +3,10 @@
 @inject IHttpService HttpService
 @inject ScoringPlayHubService ScoringPlayHubService
 @inject TimezoneService TimezoneService
+@implements IDisposable
+@layout DateHeader
+@page "/"
+@page "/scoring-plays"
 
 <div>
     @if (_isLoading)
@@ -21,14 +25,14 @@
                value="hr"
                checked="@OnlyShowHomeRuns"
                @onchange="(() => OnlyShowHomeRuns = true)">
-        <label for="home_runs">Only home runs</label><br>
+        <label for="home_runs" class="text-light">Only home runs</label><br>
         <input type="radio"
                id="all"
                name="all_scoring_plays_toggle"
                value="all"
                checked="@(!OnlyShowHomeRuns)"
                @onchange="(() => OnlyShowHomeRuns = false)">
-        <label for="all">All scoring plays</label><br>
+        <label for="all" class="text-light">All scoring plays</label><br>
     </div>
 
     <QuickGrid Items="@_items" ResizableColumns="true" class="table bg-black text-light">

@@ -4,11 +4,11 @@ using MediatR;
 
 namespace HomeRunTracker.Backend.Handlers;
 
-public class HomeRunUpdatedHandler : INotificationHandler<ScoringPlayUpdatedNotification>
+public class ScoringPlayUpdatedHandler : INotificationHandler<ScoringPlayUpdatedNotification>
 {
     private readonly IClusterClient _clusterClient;
 
-    public HomeRunUpdatedHandler(IClusterClient clusterClient)
+    public ScoringPlayUpdatedHandler(IClusterClient clusterClient)
     {
         _clusterClient = clusterClient;
     }

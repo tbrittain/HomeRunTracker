@@ -1,21 +1,22 @@
 ﻿using Blazored.Modal;
 using Blazored.Modal.Services;
 using HomeRunTracker.Common.Enums;
-using HomeRunTracker.Common.Models.Details;
-using HomeRunTracker.Common.Models.Internal;
 using HomeRunTracker.Common.Models.Notifications;
+using HomeRunTracker.Frontend.Components;
 using HomeRunTracker.Frontend.Models;
 using Mapster;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.QuickGrid;
 
-namespace HomeRunTracker.Frontend.Components;
+namespace HomeRunTracker.Frontend.Pages;
 
-public partial class ScoringPlayTable
+public partial class ScoringPlayPage
 {
     private IQueryable<ScoringPlayModel> _items = null!;
     private HashSet<ScoringPlayModel> _scoringPlays = new();
     private bool _isLoading;
+    private TimeSpan _localOffset = TimeSpan.Zero;
+    private bool _onlyShowHomeRuns = true;
     
     private readonly GridSort<ScoringPlayModel> _teamSort = 
         GridSort<ScoringPlayModel>.ByAscending(x => x.TeamName);
@@ -38,9 +39,9 @@ public partial class ScoringPlayTable
     private readonly GridSort<ScoringPlayModel> _playResultSort = 
         GridSort<ScoringPlayModel>.ByDescending(x => x.PlayResult);
 
+    [CascadingParameter] public DateTime Date { get; set; }
+    
     [CascadingParameter] public IModalService Modal { get; set; } = default!;
-
-    [Parameter] public DateTime DateTime { get; set; }
 
     private bool OnlyShowHomeRuns
     {
@@ -55,7 +56,7 @@ public partial class ScoringPlayTable
 
     private void FilterScoringPlays(bool onlyShowHomeRuns)
     {
-        if (_onlyShowHomeRuns)
+        if (onlyShowHomeRuns)
         {
             _items = _scoringPlays
                 .Where(x => x.Result == EPlayResult.HomeRun)
@@ -66,9 +67,6 @@ public partial class ScoringPlayTable
             _items = _scoringPlays.AsQueryable();
         }
     }
-
-    private TimeSpan _localOffset = TimeSpan.Zero;
-    private bool _onlyShowHomeRuns = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -86,7 +84,7 @@ public partial class ScoringPlayTable
         _scoringPlays.Clear();
         _items = new List<ScoringPlayModel>().AsQueryable();
 
-        var scoringPlayDtos = await HttpService.GetScoringPlaysAsync(DateTime == DateTime.Today ? null : DateTime.Date);
+        var scoringPlayDtos = await HttpService.GetScoringPlaysAsync(Date == DateTime.Today ? null : Date.Date);
         var scoringPlays = scoringPlayDtos
             .Select(x => x.Adapt<ScoringPlayModel>()).ToList();
         _scoringPlays = scoringPlays.ToHashSet();
@@ -108,10 +106,7 @@ public partial class ScoringPlayTable
 
     private async Task OnScoringPlayUpdated(ScoringPlayUpdatedNotification arg)
     {
-        if (arg.GameStartTime.Date != DateTime.Date)
-        {
-            return;
-        }
+        if (arg.GameStartTime.Date != Date.Date) return;
 
         var homeRun = _scoringPlays.Single(_ => _.Hash == arg.HomeRunHash);
         homeRun.HighlightUrl = arg.HighlightUrl;
@@ -121,10 +116,7 @@ public partial class ScoringPlayTable
 
     private async Task OnScoringPlayReceived(ScoringPlayNotification arg)
     {
-        if (arg.GameStartTime.Date != DateTime.Date)
-        {
-            return;
-        }
+        if (arg.GameStartTime.Date != Date.Date) return;
 
         var homeRunDto = arg.ScoringPlay;
         var homeRun = homeRunDto.Adapt<ScoringPlayModel>();
@@ -149,5 +141,12 @@ public partial class ScoringPlayTable
         };
         
         Modal.Show<VideoPlayer>("", parameters, options);
+    }
+
+    public void Dispose()
+    {
+        ScoringPlayHubService.OnScoringPlayReceived -= OnScoringPlayReceived;
+        ScoringPlayHubService.OnScoringPlayUpdated -= OnScoringPlayUpdated;
+        GC.SuppressFinalize(this);
     }
 }

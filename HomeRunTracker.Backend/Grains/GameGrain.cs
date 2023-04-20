@@ -13,137 +13,30 @@ namespace HomeRunTracker.Backend.Grains;
 // ReSharper disable once UnusedType.Global
 public class GameGrain : Grain, IGameGrain
 {
-    private readonly HashSet<ScoringPlayRecord> _scoringPlays = new();
     private readonly HashSet<GameScoreRecord> _gameScores = new();
     private readonly IHttpService _httpService;
-    private readonly ILogger<GameGrain> _logger;
     private readonly LeverageIndexService _leverageIndexService;
-    private readonly GameScoreService _gameScoreService;
+    private readonly ILogger<GameGrain> _logger;
     private readonly IMediator _mediator;
-    private MlbGameDetails _gameDetails = new();
+    private readonly PitcherGameScoreService _pitcherGameScoreService;
+    private readonly HashSet<ScoringPlayRecord> _scoringPlays = new();
     private MlbGameContent _gameContent = new();
-    private DateTimeOffset _gameStartTime = DateTimeOffset.MinValue;
+    private MlbGameDetails _gameDetails = new();
     private int _gameId;
+    private DateTimeOffset _gameStartTime = DateTimeOffset.MinValue;
     private bool _isInitialLoad = true;
 
     public GameGrain(ILogger<GameGrain> logger, IMediator mediator, IHttpService httpService,
-        LeverageIndexService leverageIndexService, GameScoreService gameScoreService)
+        LeverageIndexService leverageIndexService, PitcherGameScoreService pitcherGameScoreService)
     {
         _logger = logger;
         _mediator = mediator;
         _httpService = httpService;
         _leverageIndexService = leverageIndexService;
-        _gameScoreService = gameScoreService;
+        _pitcherGameScoreService = pitcherGameScoreService;
     }
 
     private List<string> ScoringPlayHashes => _scoringPlays.Select(x => x.Hash).ToList();
-
-    public override async Task OnActivateAsync(CancellationToken cancellationToken)
-    {
-        _gameId = (int) this.GetPrimaryKeyLong();
-        _logger.LogInformation("Initializing game grain {GameId}", _gameId.ToString());
-
-        await PollGame(new object());
-        RegisterTimer(PollGame, null, TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(5));
-
-        await base.OnActivateAsync(cancellationToken);
-    }
-
-    private async Task PollGame(object _)
-    {
-        _logger.LogDebug("Polling game {GameId}", _gameId.ToString());
-
-        var fetchGameDetailsTask = _httpService.FetchGameDetails(_gameId);
-        var fetchGameContentTask = _httpService.FetchGameContent(_gameId);
-
-        await Task.WhenAll(fetchGameDetailsTask, fetchGameContentTask);
-
-        if (fetchGameDetailsTask.Result.TryPickT2(out var error, out var rest))
-        {
-            _logger.LogError("Failed to fetch game details from MLB API: {Error}", error.Value);
-        }
-
-        if (rest.TryPickT1(out var failureStatusCode, out var gameDetails))
-        {
-            _logger.LogError("Failed to fetch game details from MLB API; status code: {StatusCode}",
-                failureStatusCode.ToString());
-        }
-
-        if (fetchGameContentTask.Result.TryPickT2(out var error2, out var rest2))
-        {
-            _logger.LogError("Failed to fetch game content from MLB API: {Error}", error2.Value);
-        }
-
-        if (rest2.TryPickT1(out var failureStatusCode2, out var gameContent))
-        {
-            _logger.LogError("Failed to fetch game content from MLB API; status code: {StatusCode}",
-                failureStatusCode2.ToString());
-        }
-
-        _gameDetails = gameDetails;
-        _gameContent = gameContent;
-        _gameStartTime = _gameDetails.GameData.GameDateTime.DateTimeOffset;
-
-        if (!_isInitialLoad)
-        {
-            switch (gameDetails.GameData.Status.Status)
-            {
-                case EMlbGameStatus.PreGame:
-                    _logger.LogInformation("Game {GameId} is in pre-game", _gameId.ToString());
-                    await Task.Delay(TimeSpan.FromMinutes(15));
-                    return;
-                case EMlbGameStatus.Warmup:
-                    _logger.LogInformation("Game {GameId} is warming up", _gameId.ToString());
-                    await Task.Delay(TimeSpan.FromMinutes(5));
-                    return;
-                case EMlbGameStatus.InProgress:
-                    break;
-                default:
-                    _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());
-                    await Stop();
-                    return;
-            }
-        }
-
-        var scoringPlays = gameDetails.LiveData.Plays.AllPlays
-            .Where(p => p.Result.Rbi > 0)
-            .ToList();
-        
-        var tasks = scoringPlays
-            .Where(play =>
-            {
-                if (_isInitialLoad) return true;
-        
-                var hash = ScoringPlayRecord.GetHash(play.Result.Description, _gameId);
-                return !ScoringPlayHashes.Contains(hash);
-            })
-            .Select(ValidateScoringPlay)
-            .ToList();
-        await Task.WhenAll(tasks);
-
-        var gameScores = _gameScoreService.GetGameScores(_gameDetails);
-        foreach (var gameScore in gameScores)
-        {
-            var existingGameScore = _gameScores.FirstOrDefault(x =>
-                x.TeamId == gameScore.TeamId && x.PitcherId == gameScore.PitcherId);
-            if (existingGameScore == null)
-            {
-                _gameScores.Add(gameScore);
-                if (!_isInitialLoad)
-                    await _mediator.Publish(new GameScoreNotification(_gameId, _gameStartTime, gameScore));
-                continue;
-            }
-
-            if (existingGameScore == gameScore) continue;
-
-            _gameScores.Remove(existingGameScore);
-            _gameScores.Add(gameScore);
-            if (!_isInitialLoad)
-                await _mediator.Publish(new GameScoreNotification(_gameId, _gameStartTime, gameScore));
-        }
-
-        _isInitialLoad = false;
-    }
 
     public async Task<MlbGameDetails> GetGame()
     {
@@ -169,6 +62,107 @@ public class GameGrain : Grain, IGameGrain
     {
         _logger.LogInformation("Getting game scores for game {GameId}", _gameId.ToString());
         return Task.FromResult(_gameScores.ToList());
+    }
+
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        _gameId = (int) this.GetPrimaryKeyLong();
+        _logger.LogInformation("Initializing game grain {GameId}", _gameId.ToString());
+
+        RegisterTimer(PollGame, null, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5));
+
+        await base.OnActivateAsync(cancellationToken);
+    }
+
+    private async Task PollGame(object _)
+    {
+        _logger.LogDebug("Polling game {GameId}", _gameId.ToString());
+
+        var fetchGameDetailsTask = _httpService.FetchGameDetails(_gameId);
+        var fetchGameContentTask = _httpService.FetchGameContent(_gameId);
+
+        await Task.WhenAll(fetchGameDetailsTask, fetchGameContentTask);
+
+        if (fetchGameDetailsTask.Result.TryPickT2(out var error, out var rest))
+            _logger.LogError("Failed to fetch game details from MLB API: {Error}", error.Value);
+
+        if (rest.TryPickT1(out var failureStatusCode, out var gameDetails))
+            _logger.LogError("Failed to fetch game details from MLB API; status code: {StatusCode}",
+                failureStatusCode.ToString());
+
+        if (fetchGameContentTask.Result.TryPickT2(out var error2, out var rest2))
+            _logger.LogError("Failed to fetch game content from MLB API: {Error}", error2.Value);
+
+        if (rest2.TryPickT1(out var failureStatusCode2, out var gameContent))
+            _logger.LogError("Failed to fetch game content from MLB API; status code: {StatusCode}",
+                failureStatusCode2.ToString());
+
+        _gameDetails = gameDetails;
+        _gameContent = gameContent;
+        _gameStartTime = _gameDetails.GameData.GameDateTime.DateTimeOffset;
+
+        if (!_isInitialLoad)
+            switch (gameDetails.GameData.Status.Status)
+            {
+                case EMlbGameStatus.PreGame:
+                    _logger.LogInformation("Game {GameId} is in pre-game", _gameId.ToString());
+                    await Task.Delay(TimeSpan.FromMinutes(15));
+                    return;
+                case EMlbGameStatus.Warmup:
+                    _logger.LogInformation("Game {GameId} is warming up", _gameId.ToString());
+                    await Task.Delay(TimeSpan.FromMinutes(5));
+                    return;
+                case EMlbGameStatus.InProgress:
+                    break;
+                default:
+                    _logger.LogInformation("Game {GameId} is no longer in progress", _gameId.ToString());
+                    await Stop();
+                    return;
+            }
+
+        var scoringPlays = gameDetails.LiveData.Plays.AllPlays
+            .Where(p => p.Result.Rbi > 0)
+            .ToList();
+
+        var tasks = scoringPlays
+            .Where(play =>
+            {
+                if (_isInitialLoad) return true;
+
+                var hash = ScoringPlayRecord.GetHash(play.Result.Description, _gameId);
+                return !ScoringPlayHashes.Contains(hash);
+            })
+            .Select(ValidateScoringPlay)
+            .ToList();
+        await Task.WhenAll(tasks);
+
+        await CheckPitcherGameScores();
+
+        _isInitialLoad = false;
+    }
+
+    private async Task CheckPitcherGameScores()
+    {
+        var gameScores = _pitcherGameScoreService.GetPitcherGameScores(_gameDetails);
+        foreach (var gameScore in gameScores)
+        {
+            var existingGameScore = _gameScores.FirstOrDefault(x =>
+                x.TeamId == gameScore.TeamId && x.PitcherId == gameScore.PitcherId);
+            if (existingGameScore == null)
+            {
+                _gameScores.Add(gameScore);
+                if (!_isInitialLoad)
+                    await _mediator.Publish(new GameScoreNotification(_gameId, _gameStartTime, gameScore));
+                continue;
+            }
+
+            if (existingGameScore == gameScore) continue;
+
+            _gameScores.Remove(existingGameScore);
+            _gameScores.Add(gameScore);
+            if (!_isInitialLoad)
+                await _mediator.Publish(new GameScoreNotification(_gameId, _gameStartTime, gameScore));
+        }
     }
 
     private async Task ValidateScoringPlay(MlbPlay play)
@@ -233,8 +227,6 @@ public class GameGrain : Grain, IGameGrain
 
         _scoringPlays.Add(scoringPlayRecord);
         if (!_isInitialLoad)
-        {
             await _mediator.Publish(new ScoringPlayNotification(_gameId, _gameStartTime, scoringPlayRecord));
-        }
     }
 }

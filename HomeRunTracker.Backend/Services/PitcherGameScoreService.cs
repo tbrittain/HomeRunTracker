@@ -4,9 +4,9 @@ using HomeRunTracker.Common.Models.Internal;
 
 namespace HomeRunTracker.Backend.Services;
 
-public class GameScoreService
+public class PitcherGameScoreService
 {
-    public HashSet<GameScoreRecord> GetGameScores(MlbGameDetails gameDetails)
+    public HashSet<GameScoreRecord> GetPitcherGameScores(MlbGameDetails gameDetails)
     {
         var pitcherGameScores = new HashSet<GameScoreRecord>();
         

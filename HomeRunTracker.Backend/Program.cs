@@ -52,7 +52,7 @@ builder.Services.AddScoped<INotificationHandler<GameScoreNotification>, GameScor
 builder.Services.AddSingleton<IHttpService, HttpService>();
 builder.Services.AddSingleton<MlbCurrentDayGamePollingService>();
 builder.Services.AddSingleton<LeverageIndexService>();
-builder.Services.AddSingleton<GameScoreService>();
+builder.Services.AddSingleton<PitcherGameScoreService>();
 builder.Services.AddHostedService<MlbCurrentDayGamePollingService>(p =>
     p.GetRequiredService<MlbCurrentDayGamePollingService>());
 

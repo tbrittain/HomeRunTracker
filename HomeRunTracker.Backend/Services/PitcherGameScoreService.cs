@@ -11,7 +11,8 @@ public class PitcherGameScoreService
     {
         var pitcherGameScores = new HashSet<GameScoreRecord>();
         
-        var playGroupings = gameDetails.LiveData.Plays.AllPlays.GroupBy(x => x.PlayerMatchup.Pitcher);
+        var playGroupings = gameDetails.LiveData.Plays.AllPlays
+            .GroupBy(x => x.PlayerMatchup.Pitcher);
 
         foreach (var grouping in playGroupings)
         {

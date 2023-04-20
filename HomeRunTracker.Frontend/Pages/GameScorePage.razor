@@ -3,11 +3,52 @@
 @inject IHttpService HttpService
 @inject ScoringPlayHubService ScoringPlayHubService
 @implements IDisposable
-@page "/game-score"
+@layout DateHeader
+@page "/game-scores"
 
 <div>
     @if (_isLoading)
     {
-        <LoadingSpinner />
+        <LoadingSpinner/>
     }
+
+    <QuickGrid Items="@_items" ResizableColumns="true" class="table bg-black text-light">
+        <TemplateColumn>
+            <img src="@context.PitcherImageUrl" alt="@context.PitcherName" width="30" style="border-radius: 15px"/>
+        </TemplateColumn>
+        <PropertyColumn Title="Name" Property="@(c => c.PitcherName)" Sortable="true"/>
+        <TemplateColumn Title="Team" Sortable="true" SortBy="_teamSort">
+            <img src="@context.TeamImageUrl" alt="@context.TeamName" width="30" style="border-radius: 100%"/>
+        </TemplateColumn>
+        <TemplateColumn Title="Against" Sortable="true" SortBy="_teamSort">
+            <img src="@context.TeamImageUrlAgainst" alt="@context.TeamNameAgainst" width="30" style="border-radius: 100%"/>
+        </TemplateColumn>
+        <TemplateColumn
+            Title="Game Score"
+            Sortable="true"
+            SortBy="@_gameScoreSort"
+            IsDefaultSort="SortDirection.Descending">
+            <div
+                style="text-align: center;"
+                class="fw-bold">
+                <p style="color: @context.GameScoreColor">@context.FormattedGameScore</p>
+            </div>
+        </TemplateColumn>
+        <TemplateColumn
+            Title="IP"
+            Sortable="true"
+            SortBy="@_inningsSort"
+            IsDefaultSort="SortDirection.Descending">
+            <div
+                style="text-align: center;"
+                class="fw-bold">
+                <p>@context.FormattedInningsPitched</p>
+            </div>
+        </TemplateColumn>
+        <PropertyColumn Title="Hits" Property="@(c => c.Hits)" Sortable="true"/>
+        <PropertyColumn Title="Strikouts" Property="@(c => c.Strikoutes)" Sortable="true"/>
+        <PropertyColumn Title="ER" Property="@(c => c.EarnedRuns)" Sortable="true"/>
+        <PropertyColumn Title="UER" Property="@(c => c.UnearnedRuns)" Sortable="true"/>
+        <PropertyColumn Title="Walks" Property="@(c => c.Walks)" Sortable="true"/>
+    </QuickGrid>
 </div>

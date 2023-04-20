@@ -2,6 +2,7 @@
 
 namespace HomeRunTracker.Frontend.Models;
 
+// ReSharper disable once ClassNeverInstantiated.Global
 public class GameScoreModel
 {
     public int GameId { get; set; }
@@ -22,7 +23,7 @@ public class GameScoreModel
     
     public int FullInningsPitched { get; set; }
 
-    public string InningsPitchedDisplay
+    public string FormattedInningsPitched
     {
         get
         {
@@ -75,7 +76,7 @@ public class GameScoreModel
     
     public string GameScoreColor => GetColorForGameScore().ToString();
 
-    public RgbColor GetColorForGameScore()
+    private RgbColor GetColorForGameScore()
     {
         switch (GameScore)
         {

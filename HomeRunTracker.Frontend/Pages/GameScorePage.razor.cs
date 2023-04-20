@@ -13,13 +13,13 @@ public partial class GameScorePage
     private bool _isLoading;
     
     private readonly GridSort<GameScoreModel> _gameScoreSort = 
-        GridSort<GameScoreModel>.ByDescending(x => x.GameScore);
+        GridSort<GameScoreModel>.ByAscending(x => x.GameScore);
     
     private readonly GridSort<GameScoreModel> _inningsSort = 
         GridSort<GameScoreModel>.ByDescending(x => x.Outs);
     
-    private readonly GridSort<ScoringPlayModel> _teamSort = 
-        GridSort<ScoringPlayModel>.ByAscending(x => x.TeamName);
+    private readonly GridSort<GameScoreModel> _teamSort = 
+        GridSort<GameScoreModel>.ByAscending(x => x.TeamName);
 
     [CascadingParameter] public DateTime Date { get; set; }
 

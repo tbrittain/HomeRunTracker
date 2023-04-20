@@ -89,13 +89,13 @@ public class GameScoreModel
             case < 50:
             {
                 var percent = Math.Abs(GameScore - 50) / 50.0;
-                var whiteness = (byte) (255 * percent);
+                var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(whiteness, whiteness, 255);
             }
             case > 50:
             {
                 var percent = (GameScore - 50) / 50.0;
-                var whiteness = (byte) (255 * percent);
+                var whiteness = (byte) (255 * (1 - percent));
                 return new RgbColor(255, whiteness, whiteness);
             }
         }

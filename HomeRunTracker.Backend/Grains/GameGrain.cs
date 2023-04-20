@@ -27,13 +27,15 @@ public class GameGrain : Grain, IGameGrain
         _httpService = httpService;
         _leverageIndexService = leverageIndexService;
         _pitcherGameScoreService = pitcherGameScoreService;
+        
+        GameId = (int) this.GetPrimaryKeyLong();
     }
 
     private MlbGameContent GameContent { get; set; } = null!;
     private MlbGameDetails GameDetails { get; set; } = null!;
     private HashSet<GameScoreRecord> GameScores { get; } = new();
     private HashSet<ScoringPlayRecord> ScoringPlays { get; } = new();
-    private int GameId { get; set; }
+    private int GameId { get; }
     private DateTimeOffset GameStartTime { get; set; } = DateTimeOffset.MinValue;
     private bool IsInitialLoad { get; set; } = true;
 
@@ -67,7 +69,6 @@ public class GameGrain : Grain, IGameGrain
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
-        GameId = (int) this.GetPrimaryKeyLong();
         _logger.LogInformation("Initializing game grain {GameId}", GameId.ToString());
 
         RegisterTimer(PollGame, null, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5));

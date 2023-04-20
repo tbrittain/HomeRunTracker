@@ -1,0 +1,34 @@
+﻿@inject NavigationManager NavigationManager
+
+<div class="dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" @onclick="ToggleMenu">
+        Menu
+    </button>
+    @if (_isOpen)
+    {
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="display: block !important;">
+            <a class="dropdown-item" @onclick="NavigateToScoringPlaysPage" style="cursor: pointer;">Scoring Plays</a>
+            <a class="dropdown-item" @onclick="NavigateToGameScoresPage" style="cursor: pointer;">Game Scores</a>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _isOpen;
+
+    private void ToggleMenu()
+    {
+        _isOpen = !_isOpen;
+    }
+
+    private void NavigateToScoringPlaysPage()
+    {
+        NavigationManager.NavigateTo("/scoring-plays");
+    }
+
+    private void NavigateToGameScoresPage()
+    {
+        NavigationManager.NavigateTo("/game-scores");
+    }
+
+}

@@ -27,8 +27,9 @@ public class GameScoreModel
     {
         get
         {
-            var remainder = Outs - (FullInningsPitched * 3);
-            return $"{FullInningsPitched}.{remainder}";
+            var remainder = Outs % 3;
+            var fullInnings = Outs / 3;
+            return $"{fullInnings}.{remainder}";
         }
     }
     

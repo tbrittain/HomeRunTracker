@@ -1,8 +1,11 @@
-﻿@inherits LayoutComponentBase
+﻿@using HomeRunTracker.Frontend.Components
+@inherits LayoutComponentBase
 @layout MainLayout
 @inject NavigationManager NavigationManager
 
 <div class="bg-black">
+    <PopOutMenu/>
+
     <div class="flex-row d-flex justify-content-center">
         <button @onclick="RemoveDay" class="btn-primary p-2 m-2">
             Previous day
@@ -21,7 +24,11 @@
         </button>
     </div>
 
-    <CascadingValue Value="@Date">
-        @Body
-    </CascadingValue>
+    <main>
+        <article class="content px-4 bg-black">
+            <CascadingValue Value="@Date">
+                @Body
+            </CascadingValue>
+        </article>
+    </main>
 </div>

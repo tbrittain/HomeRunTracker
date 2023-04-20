@@ -25,9 +25,8 @@ public class LeverageIndexService
         var isTopInning = play.About.IsTopInning;
         var outs = play.Count.Outs;
 
-        var homeScore = play.Result.HomeScore;
-        var awayScore = play.Result.AwayScore;
-        var homeTeamRunDiff = homeScore - awayScore;
+        var (homeScoreStart, awayScoreStart) = play.GetScoreStart();
+        var homeTeamRunDiff = homeScoreStart - awayScoreStart;
 
         if (homeTeamRunDiff is > 4 or < -4) return 0.0f;
 
@@ -50,7 +49,8 @@ public class LeverageIndexService
         if (row is null) return 0.0f;
 
         // Index 8 is the location of the leverage index for a run differential of 0
-        var leverageIndex = float.Parse(row[8 + homeTeamRunDiff].ToString()!) ;
+        var column = row[8 + homeTeamRunDiff];
+        var leverageIndex = float.Parse(column.ToString()!);
 
         return leverageIndex;
     }

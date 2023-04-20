@@ -71,7 +71,8 @@ public class GameGrain : Grain, IGameGrain
     {
         _logger.LogInformation("Initializing game grain {GameId}", GameId.ToString());
 
-        RegisterTimer(PollGame, null, TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(5));
+        await PollGame(new object());
+        RegisterTimer(PollGame, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
 
         await base.OnActivateAsync(cancellationToken);
     }

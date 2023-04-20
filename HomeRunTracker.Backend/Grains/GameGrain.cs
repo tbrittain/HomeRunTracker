@@ -108,12 +108,12 @@ public class GameGrain : Grain, IGameGrain
         var scoringPlays = gameDetails.LiveData.Plays.AllPlays
             .Where(p => p.Result.Rbi > 0)
             .ToList();
-
+        
         var tasks = scoringPlays
             .Where(play =>
             {
                 if (_isInitialLoad) return true;
-
+        
                 var hash = ScoringPlayRecord.GetHash(play.Result.Description, _gameId);
                 return !ScoringPlayHashes.Contains(hash);
             })
@@ -129,15 +129,17 @@ public class GameGrain : Grain, IGameGrain
             if (existingGameScore == null)
             {
                 _gameScores.Add(gameScore);
-                await _mediator.Publish(new GameScoreNotification(_gameId, _gameStartTime, gameScore));
-                return;
+                if (!_isInitialLoad)
+                    await _mediator.Publish(new GameScoreNotification(_gameId, _gameStartTime, gameScore));
+                continue;
             }
 
-            if (existingGameScore == gameScore) return;
+            if (existingGameScore == gameScore) continue;
 
             _gameScores.Remove(existingGameScore);
             _gameScores.Add(gameScore);
-            await _mediator.Publish(new GameScoreNotification(_gameId, _gameStartTime, gameScore));
+            if (!_isInitialLoad)
+                await _mediator.Publish(new GameScoreNotification(_gameId, _gameStartTime, gameScore));
         }
 
         _isInitialLoad = false;
@@ -192,10 +194,8 @@ public class GameGrain : Grain, IGameGrain
             _logger.LogInformation("Scoring play {Hash} has a new highlight URL", descriptionHashString);
             existingScoringPlay.HighlightUrl = highlightUrl;
             if (!_isInitialLoad)
-            {
                 await _mediator.Publish(new ScoringPlayUpdatedNotification(descriptionHashString, _gameId,
                     _gameStartTime, highlightUrl));
-            }
 
             return;
         }

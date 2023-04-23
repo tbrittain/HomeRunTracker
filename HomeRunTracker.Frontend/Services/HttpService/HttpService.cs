@@ -1,4 +1,4 @@
-﻿using HomeRunTracker.Common.Models.Internal;
+﻿using HomeRunTracker.Backend.Models;
 using Newtonsoft.Json;
 
 namespace HomeRunTracker.Frontend.Services.HttpService;
@@ -18,8 +18,8 @@ public class HttpService : IHttpService
         httpClient.BaseAddress = new Uri("http://localhost:5001");
 
         var endpoint = dateTime.HasValue
-            ? $"/api/scoring-plays?date={dateTime.Value:yyyy-MM-dd}"
-            : "/api/scoring-plays";
+            ? $"/api/scoringplay?date={dateTime.Value:yyyy-MM-dd}"
+            : "/api/scoringplay";
 
         var response = await httpClient.GetAsync(endpoint);
         response.EnsureSuccessStatusCode();
@@ -38,8 +38,8 @@ public class HttpService : IHttpService
         httpClient.BaseAddress = new Uri("http://localhost:5001");
         
         var endpoint = dateTime.HasValue
-            ? $"/api/game-scores?date={dateTime.Value:yyyy-MM-dd}"
-            : "/api/game-scores";
+            ? $"/api/gamescore?date={dateTime.Value:yyyy-MM-dd}"
+            : "/api/gamescore";
         
         var response = await httpClient.GetAsync(endpoint);
         response.EnsureSuccessStatusCode();

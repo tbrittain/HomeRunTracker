@@ -21,4 +21,8 @@
       <PackageReference Include="Microsoft.Orleans.Client" Version="7.1.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\HomeRunTracker.Backend\HomeRunTracker.Backend.csproj" />
+    </ItemGroup>
+
 </Project>

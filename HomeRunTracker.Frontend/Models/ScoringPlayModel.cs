@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using HomeRunTracker.Common.Enums;
+using HomeRunTracker.SharedKernel.Enums;
 
 namespace HomeRunTracker.Frontend.Models;
 

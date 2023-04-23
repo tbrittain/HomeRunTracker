@@ -1,6 +1,5 @@
 ﻿using HomeRunTracker.Backend.Models;
-using HomeRunTracker.Core.Actions.GameScores.Notifications;
-using HomeRunTracker.Core.Actions.ScoringPlays.Notifications;
+using HomeRunTracker.Backend.Models.Notifications;
 
 namespace HomeRunTracker.Backend.Grains;
 

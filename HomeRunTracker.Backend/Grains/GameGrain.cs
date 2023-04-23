@@ -1,9 +1,7 @@
 ﻿using HomeRunTracker.Backend.Models;
 using HomeRunTracker.Backend.Models.Content;
 using HomeRunTracker.Backend.Models.Details;
-using HomeRunTracker.Core.Actions.Games.Notifications;
-using HomeRunTracker.Core.Actions.GameScores.Notifications;
-using HomeRunTracker.Core.Actions.ScoringPlays.Notifications;
+using HomeRunTracker.Backend.Models.Notifications;
 using HomeRunTracker.Core.Interfaces;
 using HomeRunTracker.Core.Models;
 using HomeRunTracker.Core.Models.Details;
@@ -163,8 +161,7 @@ public class GameGrain : Grain, IGameGrain
             {
                 GameScores.Add(gameScore);
                 if (!IsInitialLoad)
-                    await _mediator.Publish(new GameScoreNotification(GameId, GameDetails.GameStartTime,
-                        gameScore.Adapt<GameScoreRecordDto>()));
+                    await _mediator.Publish(new GameScoreNotification(GameId, GameDetails.GameStartTime, gameScore));
                 continue;
             }
 
@@ -173,8 +170,7 @@ public class GameGrain : Grain, IGameGrain
             GameScores.Remove(existingGameScore);
             GameScores.Add(gameScore);
             if (!IsInitialLoad)
-                await _mediator.Publish(new GameScoreNotification(GameId, GameDetails.GameStartTime,
-                    gameScore.Adapt<GameScoreRecordDto>()));
+                await _mediator.Publish(new GameScoreNotification(GameId, GameDetails.GameStartTime, gameScore));
         }
     }
 
@@ -236,7 +232,6 @@ public class GameGrain : Grain, IGameGrain
 
         ScoringPlays.Add(scoringPlayRecord);
         if (!IsInitialLoad)
-            await _mediator.Publish(new ScoringPlayNotification(GameId, GameDetails.GameStartTime,
-                scoringPlayRecord.Adapt<ScoringPlayRecordDto>()));
+            await _mediator.Publish(new ScoringPlayNotification(GameId, GameDetails.GameStartTime, scoringPlayRecord));
     }
 }

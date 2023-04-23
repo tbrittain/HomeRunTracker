@@ -1,12 +1,9 @@
 using System.Net;
-using HomeRunTracker.Backend.Grains;
+using System.Reflection;
 using HomeRunTracker.Backend.Handlers;
 using HomeRunTracker.Backend.Hubs;
+using HomeRunTracker.Backend.Models.Notifications;
 using HomeRunTracker.Backend.Services;
-using HomeRunTracker.Core;
-using HomeRunTracker.Core.Actions.Games.Notifications;
-using HomeRunTracker.Core.Actions.GameScores.Notifications;
-using HomeRunTracker.Core.Actions.ScoringPlays.Notifications;
 using HomeRunTracker.Infrastructure.LeverageIndex;
 using HomeRunTracker.Infrastructure.MlbApiService;
 using HomeRunTracker.Infrastructure.PitcherGameScore;
@@ -45,7 +42,8 @@ builder.WebHost.UseKestrel((ctx, kestrelOptions) =>
 });
 
 
-builder.Services.AddCore()
+builder.Services.AddMediatR(cfg => 
+        cfg.RegisterServicesFromAssembly(Assembly.GetCallingAssembly()))
     .AddMlbApiService()
     .AddLeverageIndexService()
     .AddPitcherGameScoreService()

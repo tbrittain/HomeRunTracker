@@ -1,7 +1,8 @@
 ﻿using MediatR;
 
-namespace HomeRunTracker.Core.Actions.Games.Notifications;
+namespace HomeRunTracker.Backend.Models.Notifications;
 
+[GenerateSerializer]
 public class GameStoppedNotification : INotification
 {
     public GameStoppedNotification(int gameId)
@@ -9,5 +10,6 @@ public class GameStoppedNotification : INotification
         GameId = gameId;
     }
 
+    [Id(0)]
     public int GameId { get; }
 }

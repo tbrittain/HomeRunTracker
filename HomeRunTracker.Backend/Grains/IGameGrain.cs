@@ -7,7 +7,6 @@ public interface IGameGrain : IGrainWithIntegerKey
 {
     Task<GameDetails> GetGame();
     Task Stop();
-    // TODO: Need to return lists of new models that have GenerateSerializerAttribute
     Task<List<ScoringPlayRecord>> GetScoringPlays();
     Task<List<GameScoreRecord>> GetGameScores();
 }

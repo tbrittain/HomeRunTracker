@@ -26,7 +26,7 @@ public class MlbCurrentDayGamePollingService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Starting MLB API polling service");
+        _logger.LogInformation($"Starting {nameof(MlbCurrentDayGamePollingService)}");
         while (!cancellationToken.IsCancellationRequested)
         {
             var fetchGamesResponse = await _mlbApiService.FetchGames(DateTime.Now);

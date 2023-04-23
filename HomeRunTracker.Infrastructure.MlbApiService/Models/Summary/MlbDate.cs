@@ -4,6 +4,7 @@ namespace HomeRunTracker.Infrastructure.MlbApiService.Models.Summary;
 
 public class MlbDate
 {
+    [JsonPropertyName("date")]
     public string Date { get; set; } = string.Empty;
     
     [JsonPropertyName("games")]

@@ -17,7 +17,7 @@ public class GameStoppedHandler : INotificationHandler<GameStoppedNotification>
     {
         var pollingService = _serviceProvider.GetService<MlbCurrentDayGamePollingService>();
         if (pollingService is null)
-            throw new InvalidOperationException("MlbApiPollingService not found");
+            throw new InvalidOperationException($"{nameof(MlbCurrentDayGamePollingService)} not found");
         
         pollingService.UntrackGame(notification.GameId);
         return Task.CompletedTask;

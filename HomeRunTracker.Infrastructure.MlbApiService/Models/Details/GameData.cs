@@ -5,6 +5,7 @@ namespace HomeRunTracker.Infrastructure.MlbApiService.Models.Details;
 
 public class GameData
 {
+    [JsonPropertyName("status")]
     public MlbGameStatus Status { get; set; } = new();
     
     [JsonPropertyName("teams")]

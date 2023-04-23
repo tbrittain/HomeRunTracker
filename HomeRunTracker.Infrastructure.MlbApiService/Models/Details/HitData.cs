@@ -1,12 +1,15 @@
-﻿namespace HomeRunTracker.Infrastructure.MlbApiService.Models.Details;
+﻿using System.Text.Json.Serialization;
+
+namespace HomeRunTracker.Infrastructure.MlbApiService.Models.Details;
 
 public class HitData
 {
-    public int Index { get; set; }
-
+    [JsonPropertyName("launchSpeed")]
     public double LaunchSpeed { get; set; }
 
+    [JsonPropertyName("launchAngle")]
     public double LaunchAngle { get; set; }
 
+    [JsonPropertyName("totalDistance")]
     public double TotalDistance { get; set; }
 }

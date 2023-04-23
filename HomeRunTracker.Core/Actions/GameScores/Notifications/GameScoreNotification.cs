@@ -5,16 +5,16 @@ namespace HomeRunTracker.Core.Actions.GameScores.Notifications;
 
 public class GameScoreNotification : INotification
 {
-    public GameScoreNotification(int gameId, DateTimeOffset gameStartTime, GameScoreRecord gameScoreRecord)
+    public GameScoreNotification(int gameId, DateTimeOffset gameStartTime, GameScoreRecordDto gameScoreRecordDto)
     {
         GameId = gameId;
         GameStartTime = gameStartTime;
-        GameScoreRecord = gameScoreRecord;
+        GameScoreRecordDto = gameScoreRecordDto;
     }
     
     public int GameId { get; }
     
     public DateTimeOffset GameStartTime { get; }
     
-    public GameScoreRecord GameScoreRecord { get; }
+    public GameScoreRecordDto GameScoreRecordDto { get; }
 }

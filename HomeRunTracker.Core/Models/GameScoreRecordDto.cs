@@ -1,6 +1,6 @@
 ﻿namespace HomeRunTracker.Core.Models;
 
-public record GameScoreRecord
+public record GameScoreRecordDto
 {
     public int GameId { get; set; }
 

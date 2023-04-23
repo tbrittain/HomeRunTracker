@@ -1,5 +1,10 @@
 ﻿using HomeRunTracker.Backend.Grains;
+using HomeRunTracker.Backend.Models;
+using HomeRunTracker.Backend.Models.Details;
+using HomeRunTracker.Backend.Models.Schedule;
 using HomeRunTracker.Core.Interfaces;
+using HomeRunTracker.SharedKernel.Enums;
+using Mapster;
 
 namespace HomeRunTracker.Backend.Services;
 
@@ -19,10 +24,10 @@ public class MlbCurrentDayGamePollingService : BackgroundService
         _mlbApiService = mlbApiService;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Starting MLB API polling service");
-        while (!stoppingToken.IsCancellationRequested)
+        while (!cancellationToken.IsCancellationRequested)
         {
             var fetchGamesResponse = await _mlbApiService.FetchGames(DateTime.Now);
 
@@ -31,29 +36,30 @@ public class MlbCurrentDayGamePollingService : BackgroundService
                 _logger.LogError("Failed to fetch games from MLB API: {Error}", error.Value);
             }
 
-            if (rest.TryPickT1(out var failureStatusCode, out var schedule))
+            if (rest.TryPickT1(out var failureStatusCode, out var scheduleDto))
             {
                 _logger.LogError("Failed to fetch games from MLB API; status code: {StatusCode}",
                     failureStatusCode.ToString());
             }
-            
-            // TODO: MAY NEED TO MAP SCHEDULE TO A NEW MODEL THAT HAS GenerateSerializerAttribute
+
+            var schedule = scheduleDto.Adapt<Schedule>();
 
             if (schedule.TotalGames == 0)
             {
                 _logger.LogInformation("No games scheduled for today");
-                await Task.Delay(_pollingInterval, stoppingToken);
+                await Task.Delay(_pollingInterval, cancellationToken);
                 continue;
             }
 
             var games = schedule.Games
                 .Where(g => !_trackedCurrentDayGameIds.Contains(g.Id))
+                .Where(g => g.Status is not (EMlbGameStatus.Final or EMlbGameStatus.Unknown))
                 .ToList();
 
             var trackedGameIds = await FanOutGameGrains(games);
             _trackedCurrentDayGameIds.AddRange(trackedGameIds);
 
-            await Task.Delay(_pollingInterval, stoppingToken);
+            await Task.Delay(_pollingInterval, cancellationToken);
         }
 
         foreach (var trackedGameId in _trackedCurrentDayGameIds)
@@ -65,10 +71,10 @@ public class MlbCurrentDayGamePollingService : BackgroundService
         _logger.LogInformation("Stopping MLB API polling service");
     }
 
-    private async Task<List<int>> FanOutGameGrains(List<MlbGameSummary> games)
+    private async Task<List<int>> FanOutGameGrains(List<GameSummary> games)
     {
         _logger.LogInformation("Fanning out {Count} game grains", games.Count.ToString());
-        List<Task<MlbGameDetails>> initializedGameTasks = new();
+        List<Task<GameDetails>> initializedGameTasks = new();
         foreach (var game in games)
         {
             var grain = _grainFactory.GetGrain<IGameGrain>(game.Id);

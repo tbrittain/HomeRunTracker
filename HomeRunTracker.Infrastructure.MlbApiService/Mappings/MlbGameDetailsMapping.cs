@@ -27,6 +27,22 @@ public static class MlbGameDetailsMapping
                 {
                     var (homeScoreStart, awayScoreStart) = mlbPlay.GetScoreStart();
 
+                    var playEvent = mlbPlay.Events.FirstOrDefault(playEvent => playEvent.HitData is not null) ??
+                                    mlbPlay.Events.Last();
+
+                    var playGuid = playEvent.PlayId;
+                    
+                    HitDataDto? hitDataDto = null;
+                    if (playEvent.HitData is not null)
+                    {
+                        hitDataDto = new HitDataDto
+                        {
+                            LaunchSpeed = playEvent.HitData.LaunchSpeed,
+                            LaunchAngle = playEvent.HitData.LaunchAngle,
+                            TotalDistance = playEvent.HitData.TotalDistance
+                        };
+                    }
+
                     return new PlayDto
                     {
                         PlayEndTime = mlbPlay.DateTimeOffset,
@@ -63,7 +79,9 @@ public static class MlbGameDetailsMapping
                                     FullName = mlbPlayRunner.Details.Pitcher.FullName
                                 }
                             })
-                            .ToList()
+                            .ToList(),
+                        HitData = hitDataDto,
+                        Id = playGuid
                     };
                 })
                 .ToList()

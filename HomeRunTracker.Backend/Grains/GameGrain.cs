@@ -1,7 +1,15 @@
-﻿using System.Diagnostics;
+﻿using HomeRunTracker.Backend.Models;
+using HomeRunTracker.Backend.Models.Content;
+using HomeRunTracker.Backend.Models.Details;
+using HomeRunTracker.Core.Actions.Games.Notifications;
 using HomeRunTracker.Core.Actions.GameScores.Notifications;
 using HomeRunTracker.Core.Actions.ScoringPlays.Notifications;
+using HomeRunTracker.Core.Interfaces;
 using HomeRunTracker.Core.Models;
+using HomeRunTracker.Core.Models.Details;
+using HomeRunTracker.Infrastructure.MlbApiService.Models.Content;
+using HomeRunTracker.SharedKernel.Enums;
+using Mapster;
 using MediatR;
 
 namespace HomeRunTracker.Backend.Grains;
@@ -9,35 +17,34 @@ namespace HomeRunTracker.Backend.Grains;
 // ReSharper disable once UnusedType.Global
 public class GameGrain : Grain, IGameGrain
 {
-    private readonly IHttpService _httpService;
-    private readonly LeverageIndexService _leverageIndexService;
+    private readonly IMlbApiService _mlbApiService;
+    private readonly ILeverageIndexService _leverageIndexService;
     private readonly ILogger<GameGrain> _logger;
     private readonly IMediator _mediator;
-    private readonly PitcherGameScoreService _pitcherGameScoreService;
+    private readonly IPitcherGameScoreService _pitcherGameScoreService;
 
-    public GameGrain(ILogger<GameGrain> logger, IMediator mediator, IHttpService httpService,
-        LeverageIndexService leverageIndexService, PitcherGameScoreService pitcherGameScoreService)
+    public GameGrain(ILogger<GameGrain> logger, IMediator mediator, IMlbApiService mlbApiService,
+        ILeverageIndexService leverageIndexService, IPitcherGameScoreService pitcherGameScoreService)
     {
         _logger = logger;
         _mediator = mediator;
-        _httpService = httpService;
+        _mlbApiService = mlbApiService;
         _leverageIndexService = leverageIndexService;
         _pitcherGameScoreService = pitcherGameScoreService;
-        
+
         GameId = (int) this.GetPrimaryKeyLong();
     }
 
-    private MlbGameContent GameContent { get; set; } = null!;
-    private MlbGameDetails GameDetails { get; set; } = null!;
+    private GameContent GameContent { get; set; } = null!;
+    private GameDetails GameDetails { get; set; } = null!;
     private HashSet<GameScoreRecord> GameScores { get; } = new();
     private HashSet<ScoringPlayRecord> ScoringPlays { get; } = new();
     private int GameId { get; }
-    private DateTimeOffset GameStartTime { get; set; } = DateTimeOffset.MinValue;
     private bool IsInitialLoad { get; set; } = true;
 
     private List<string> ScoringPlayHashes => ScoringPlays.Select(x => x.Hash).ToList();
 
-    public async Task<MlbGameDetails> GetGame()
+    public async Task<GameDetails> GetGame()
     {
         _logger.LogInformation("Getting game details for game {GameId}", GameId.ToString());
         return await Task.FromResult(GameDetails);
@@ -77,31 +84,33 @@ public class GameGrain : Grain, IGameGrain
     {
         _logger.LogDebug("Polling game {GameId}", GameId.ToString());
 
-        var fetchGameDetailsTask = _httpService.FetchGameDetails(GameId);
-        var fetchGameContentTask = _httpService.FetchGameContent(GameId);
+        var fetchGameDetailsTask = _mlbApiService.FetchGameDetails(GameId);
+        var fetchGameContentTask = _mlbApiService.FetchGameContent(GameId);
 
         await Task.WhenAll(fetchGameDetailsTask, fetchGameContentTask);
 
         if (fetchGameDetailsTask.Result.TryPickT2(out var error, out var rest))
             _logger.LogError("Failed to fetch game details from MLB API: {Error}", error.Value);
 
-        if (rest.TryPickT1(out var failureStatusCode, out var gameDetails))
+        if (rest.TryPickT1(out var failureStatusCode, out var gameDetailsDto))
             _logger.LogError("Failed to fetch game details from MLB API; status code: {StatusCode}",
                 failureStatusCode.ToString());
 
         if (fetchGameContentTask.Result.TryPickT2(out var error2, out var rest2))
             _logger.LogError("Failed to fetch game content from MLB API: {Error}", error2.Value);
 
-        if (rest2.TryPickT1(out var failureStatusCode2, out var gameContent))
+        if (rest2.TryPickT1(out var failureStatusCode2, out var gameContentDto))
             _logger.LogError("Failed to fetch game content from MLB API; status code: {StatusCode}",
                 failureStatusCode2.ToString());
 
+        var gameDetails = gameDetailsDto.Adapt<GameDetails>();
+        var gameContent = gameContentDto.Adapt<GameContent>();
+
         GameDetails = gameDetails;
         GameContent = gameContent;
-        GameStartTime = GameDetails.GameData.GameDateTime.DateTimeOffset;
 
         if (!IsInitialLoad)
-            switch (gameDetails.GameData.Status.Status)
+            switch (gameDetails.Status)
             {
                 case EMlbGameStatus.PreGame:
                     _logger.LogInformation("Game {GameId} is in pre-game", GameId.ToString());
@@ -119,8 +128,8 @@ public class GameGrain : Grain, IGameGrain
                     return;
             }
 
-        var scoringPlays = gameDetails.LiveData.Plays.AllPlays
-            .Where(p => p.Result.Rbi > 0)
+        var scoringPlays = gameDetails.Plays
+            .Where(p => p.Rbi > 0)
             .ToList();
 
         var tasks = scoringPlays
@@ -128,7 +137,7 @@ public class GameGrain : Grain, IGameGrain
             {
                 if (IsInitialLoad) return true;
 
-                var hash = ScoringPlayRecord.GetHash(play.Result.Description, GameId);
+                var hash = ScoringPlayRecordDto.GetHash(play.Description, GameId);
                 return !ScoringPlayHashes.Contains(hash);
             })
             .Select(ValidateScoringPlay)
@@ -142,7 +151,11 @@ public class GameGrain : Grain, IGameGrain
 
     private async Task CheckPitcherGameScores()
     {
-        var gameScores = _pitcherGameScoreService.GetPitcherGameScores(GameDetails);
+        var gameScoreDtos = _pitcherGameScoreService.GetPitcherGameScores(GameDetails.Adapt<GameDetailsDto>());
+        var gameScores = gameScoreDtos
+            .Select(x => x.Adapt<GameScoreRecord>())
+            .ToList();
+
         foreach (var gameScore in gameScores)
         {
             var existingGameScore = GameScores.FirstOrDefault(x =>
@@ -151,7 +164,8 @@ public class GameGrain : Grain, IGameGrain
             {
                 GameScores.Add(gameScore);
                 if (!IsInitialLoad)
-                    await _mediator.Publish(new GameScoreNotification(GameId, GameStartTime, gameScore));
+                    await _mediator.Publish(new GameScoreNotification(GameId, GameDetails.GameStartTime,
+                        gameScore.Adapt<GameScoreRecordDto>()));
                 continue;
             }
 
@@ -160,20 +174,17 @@ public class GameGrain : Grain, IGameGrain
             GameScores.Remove(existingGameScore);
             GameScores.Add(gameScore);
             if (!IsInitialLoad)
-                await _mediator.Publish(new GameScoreNotification(GameId, GameStartTime, gameScore));
+                await _mediator.Publish(new GameScoreNotification(GameId, GameDetails.GameStartTime,
+                    gameScore.Adapt<GameScoreRecordDto>()));
         }
     }
 
-    private async Task ValidateScoringPlay(MlbPlay play)
+    private async Task ValidateScoringPlay(Play play)
     {
-        var descriptionHashString = ScoringPlayRecord.GetHash(play.Result.Description, GameId);
+        var descriptionHashString = ScoringPlayRecordDto.GetHash(play.Description, GameId);
 
-        var scoringPlayEvent = play.Events.SingleOrDefault(e => e.HitData is not null) ?? play.Events.Last();
-
-        Debug.Assert(scoringPlayEvent is not null, nameof(scoringPlayEvent) + " is not null");
-
-        var highlightUrl = (GameContent.HighlightsOverview?.Highlights?.Items ?? new List<HighlightItem>())
-            .FirstOrDefault(item => item.Guid is not null && item.Guid == scoringPlayEvent.PlayId)
+        var highlightUrl = GameContent.Highlights
+            .FirstOrDefault(item => item.Guid is not null && item.Guid == play.Id)
             ?.Playbacks.FirstOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
             ?.Url;
 
@@ -188,7 +199,7 @@ public class GameGrain : Grain, IGameGrain
             existingScoringPlay.HighlightUrl = highlightUrl;
             if (!IsInitialLoad)
                 await _mediator.Publish(new ScoringPlayUpdatedNotification(descriptionHashString, GameId,
-                    GameStartTime, highlightUrl));
+                    GameDetails.GameStartTime, highlightUrl));
 
             return;
         }
@@ -197,35 +208,36 @@ public class GameGrain : Grain, IGameGrain
             descriptionHashString);
 
         var (batterTeamId, pitcherTeamId, batterTeamName, pitcherTeamName, isTopInning) =
-            new PlayTeams(play, GameDetails);
+            new PlayTeams(play.Adapt<PlayDto>(), GameDetails.Adapt<GameDetailsDto>());
 
         var scoringPlayRecord = new ScoringPlayRecord
         {
             Hash = descriptionHashString,
             GameId = GameId,
-            DateTimeOffset = play.DateTimeOffset,
-            BatterId = play.PlayerMatchup.Batter.Id,
-            BatterName = play.PlayerMatchup.Batter.FullName,
-            Description = play.Result.Description,
-            Rbi = play.Result.Rbi,
-            LaunchSpeed = scoringPlayEvent.HitData?.LaunchSpeed ?? 0,
-            LaunchAngle = scoringPlayEvent.HitData?.LaunchAngle ?? 0,
-            TotalDistance = scoringPlayEvent.HitData?.TotalDistance ?? 0,
-            Inning = play.About.Inning,
+            DateTimeOffset = play.PlayEndTime,
+            BatterId = play.Batter.Id,
+            BatterName = play.Batter.FullName,
+            Description = play.Description,
+            Rbi = play.Rbi,
+            LaunchSpeed = play.HitData?.LaunchSpeed ?? 0,
+            LaunchAngle = play.HitData?.LaunchAngle ?? 0,
+            TotalDistance = play.HitData?.TotalDistance ?? 0,
+            Inning = play.Inning,
             IsTopInning = isTopInning,
-            PitcherId = play.PlayerMatchup.Pitcher.Id,
-            PitcherName = play.PlayerMatchup.Pitcher.FullName,
+            PitcherId = play.Pitcher.Id,
+            PitcherName = play.Pitcher.FullName,
             HighlightUrl = highlightUrl,
             TeamId = batterTeamId,
             TeamName = batterTeamName,
             TeamNameAgainstId = pitcherTeamId,
             TeamNameAgainst = pitcherTeamName,
-            LeverageIndex = _leverageIndexService.GetLeverageIndex(play),
-            PlayResult = play.Result.Result
+            LeverageIndex = _leverageIndexService.GetLeverageIndex(play.Adapt<PlayDto>()),
+            PlayResult = play.Result
         };
 
         ScoringPlays.Add(scoringPlayRecord);
         if (!IsInitialLoad)
-            await _mediator.Publish(new ScoringPlayNotification(GameId, GameStartTime, scoringPlayRecord));
+            await _mediator.Publish(new ScoringPlayNotification(GameId, GameDetails.GameStartTime,
+                scoringPlayRecord.Adapt<ScoringPlayRecordDto>()));
     }
 }

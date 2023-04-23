@@ -8,9 +8,9 @@ namespace HomeRunTracker.Infrastructure.PitcherGameScore.Services;
 
 public class PitcherGameScoreService : IPitcherGameScoreService
 {
-    public HashSet<GameScoreRecord> GetPitcherGameScores(GameDetailsDto gameDetails)
+    public HashSet<GameScoreRecordDto> GetPitcherGameScores(GameDetailsDto gameDetails)
     {
-        var pitcherGameScores = new HashSet<GameScoreRecord>();
+        var pitcherGameScores = new HashSet<GameScoreRecordDto>();
         
         var playGroupings = gameDetails.Plays
             .GroupBy(x => x.Pitcher);
@@ -38,7 +38,7 @@ public class PitcherGameScoreService : IPitcherGameScoreService
             var (batterTeamId, pitcherTeamId, batterTeamName, pitcherTeamName, _) =
                 new PlayTeams(plays[0], gameDetails);
             
-            var gameScore = new GameScoreRecord
+            var gameScore = new GameScoreRecordDto
             {
                 GameId = gameDetails.Id,
                 PitcherId = pitcher.Id,

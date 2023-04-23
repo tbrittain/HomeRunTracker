@@ -5,5 +5,5 @@ namespace HomeRunTracker.Core.Interfaces;
 
 public interface IPitcherGameScoreService
 {
-    public HashSet<GameScoreRecord> GetPitcherGameScores(GameDetailsDto gameDetails);
+    public HashSet<GameScoreRecordDto> GetPitcherGameScores(GameDetailsDto gameDetails);
 }

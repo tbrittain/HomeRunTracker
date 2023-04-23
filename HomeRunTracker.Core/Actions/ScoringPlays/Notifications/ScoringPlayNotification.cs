@@ -5,7 +5,7 @@ namespace HomeRunTracker.Core.Actions.ScoringPlays.Notifications;
 
 public class ScoringPlayNotification : INotification
 {
-    public ScoringPlayNotification(int gameId, DateTimeOffset gameStartTime, ScoringPlayRecord scoringPlay)
+    public ScoringPlayNotification(int gameId, DateTimeOffset gameStartTime, ScoringPlayRecordDto scoringPlay)
     {
         GameId = gameId;
         GameStartTime = gameStartTime;
@@ -16,5 +16,5 @@ public class ScoringPlayNotification : INotification
     
     public DateTimeOffset GameStartTime { get; }
     
-    public ScoringPlayRecord ScoringPlay { get; }
+    public ScoringPlayRecordDto ScoringPlay { get; }
 }

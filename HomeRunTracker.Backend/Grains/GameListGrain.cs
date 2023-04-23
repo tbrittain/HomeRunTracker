@@ -1,7 +1,8 @@
 ﻿using HomeRunTracker.Backend.Hubs;
+using HomeRunTracker.Backend.Models;
 using HomeRunTracker.Core.Actions.GameScores.Notifications;
 using HomeRunTracker.Core.Actions.ScoringPlays.Notifications;
-using HomeRunTracker.Core.Models;
+using HomeRunTracker.Core.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
 
@@ -11,17 +12,17 @@ namespace HomeRunTracker.Backend.Grains;
 public class GameListGrain : Grain, IGameListGrain
 {
     private readonly IClusterClient _clusterClient;
-    private readonly IHttpService _httpService;
+    private readonly IMlbApiService _mlbApiService;
     private readonly IHubContext<ScoringPlayHub> _hubContext;
     private readonly ILogger<GameListGrain> _logger;
 
     public GameListGrain(IClusterClient clusterClient, ILogger<GameListGrain> logger,
-        IHubContext<ScoringPlayHub> hubContext, IHttpService httpService)
+        IHubContext<ScoringPlayHub> hubContext, IMlbApiService mlbApiService)
     {
         _clusterClient = clusterClient;
         _logger = logger;
         _hubContext = hubContext;
-        _httpService = httpService;
+        _mlbApiService = mlbApiService;
     }
 
     public async Task<List<ScoringPlayRecord>> GetScoringPlays(DateTime dateTime)
@@ -99,7 +100,7 @@ public class GameListGrain : Grain, IGameListGrain
 
     private async Task<List<IGameGrain>> GetGameGrains(DateTime dateTime)
     {
-        var fetchGamesResponse = await _httpService.FetchGames(dateTime);
+        var fetchGamesResponse = await _mlbApiService.FetchGames(dateTime);
 
         if (fetchGamesResponse.TryPickT2(out var error, out var rest))
             _logger.LogError("Failed to fetch games from MLB API: {Error}", error.Value);
@@ -110,9 +111,8 @@ public class GameListGrain : Grain, IGameListGrain
 
         if (gameSchedule.TotalGames == 0) return new List<IGameGrain>();
 
-        var gameIds = gameSchedule.Dates
-            .SelectMany(x => x.Games
-                .Select(y => y.Id))
+        var gameIds = gameSchedule.Games
+                .Select(y => y.Id)
             .ToList();
 
         var gameGrains = gameIds

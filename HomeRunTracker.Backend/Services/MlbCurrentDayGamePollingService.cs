@@ -73,7 +73,6 @@ public class MlbCurrentDayGamePollingService : BackgroundService
 
     private async Task<List<int>> FanOutGameGrains(List<GameSummary> games)
     {
-        games = games.Where(x => x.Id == 718462).ToList();
         _logger.LogInformation("Fanning out {Count} game grains", games.Count.ToString());
         List<Task<GameDetails>> initializedGameTasks = new();
         foreach (var game in games)

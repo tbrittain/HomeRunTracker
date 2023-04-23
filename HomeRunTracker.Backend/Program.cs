@@ -1,11 +1,15 @@
 using System.Net;
-using System.Reflection;
 using HomeRunTracker.Backend.Grains;
 using HomeRunTracker.Backend.Handlers;
 using HomeRunTracker.Backend.Hubs;
 using HomeRunTracker.Backend.Services;
-using HomeRunTracker.Backend.Services.HttpService;
-using HomeRunTracker.Common.Models.Notifications;
+using HomeRunTracker.Core;
+using HomeRunTracker.Core.Actions.Games.Notifications;
+using HomeRunTracker.Core.Actions.GameScores.Notifications;
+using HomeRunTracker.Core.Actions.ScoringPlays.Notifications;
+using HomeRunTracker.Infrastructure.LeverageIndex;
+using HomeRunTracker.Infrastructure.MlbApiService;
+using HomeRunTracker.Infrastructure.PitcherGameScore;
 using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,21 +44,19 @@ builder.WebHost.UseKestrel((ctx, kestrelOptions) =>
     kestrelOptions.ListenLocalhost(5001 + instanceId);
 });
 
-builder.Services.AddHttpClient();
-builder.Services.AddSignalR();
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
-builder.Services.AddScoped<INotificationHandler<GameStoppedNotification>, GameRemovedHandler>();
-builder.Services.AddScoped<INotificationHandler<ScoringPlayNotification>, HomeRunHandler>();
-builder.Services.AddScoped<INotificationHandler<ScoringPlayUpdatedNotification>, ScoringPlayUpdatedHandler>();
-builder.Services.AddScoped<INotificationHandler<GameScoreNotification>, GameScoreHandler>();
-
-builder.Services.AddSingleton<IHttpService, HttpService>();
-builder.Services.AddSingleton<MlbCurrentDayGamePollingService>();
-builder.Services.AddSingleton<LeverageIndexService>();
-builder.Services.AddSingleton<PitcherGameScoreService>();
-builder.Services.AddHostedService<MlbCurrentDayGamePollingService>(p =>
-    p.GetRequiredService<MlbCurrentDayGamePollingService>());
+builder.Services.AddCore()
+    .AddMlbApiService()
+    .AddLeverageIndexService()
+    .AddPitcherGameScoreService()
+    .AddScoped<INotificationHandler<GameStoppedNotification>, GameRemovedHandler>()
+    .AddScoped<INotificationHandler<ScoringPlayNotification>, HomeRunHandler>()
+    .AddScoped<INotificationHandler<ScoringPlayUpdatedNotification>, ScoringPlayUpdatedHandler>()
+    .AddScoped<INotificationHandler<GameScoreNotification>, GameScoreHandler>()
+    .AddSingleton<MlbCurrentDayGamePollingService>()
+    .AddHostedService<MlbCurrentDayGamePollingService>(p =>
+        p.GetRequiredService<MlbCurrentDayGamePollingService>())
+    .AddSignalR();
 
 var app = builder.Build();
 

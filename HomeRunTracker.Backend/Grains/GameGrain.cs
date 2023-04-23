@@ -1,11 +1,7 @@
 ﻿using System.Diagnostics;
-using HomeRunTracker.Backend.Services;
-using HomeRunTracker.Backend.Services.HttpService;
-using HomeRunTracker.Common.Enums;
-using HomeRunTracker.Common.Models.Content;
-using HomeRunTracker.Common.Models.Details;
-using HomeRunTracker.Common.Models.Internal;
-using HomeRunTracker.Common.Models.Notifications;
+using HomeRunTracker.Core.Actions.GameScores.Notifications;
+using HomeRunTracker.Core.Actions.ScoringPlays.Notifications;
+using HomeRunTracker.Core.Models;
 using MediatR;
 
 namespace HomeRunTracker.Backend.Grains;

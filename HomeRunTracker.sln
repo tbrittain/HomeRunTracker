@@ -2,9 +2,17 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeRunTracker.Backend", "HomeRunTracker.Backend\HomeRunTracker.Backend.csproj", "{3367DA14-BA7B-4B2B-9798-ADB3707055F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeRunTracker.Common", "HomeRunTracker.Common\HomeRunTracker.Common.csproj", "{3BA66BA8-45A8-43BE-813C-687EA6A2897A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeRunTracker.Frontend", "HomeRunTracker.Frontend\HomeRunTracker.Frontend.csproj", "{CCCE0210-A5D6-4134-98F5-B2D313DAF1FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeRunTracker.Core", "HomeRunTracker.Core\HomeRunTracker.Core.csproj", "{870CCAB3-A713-43F1-86D8-BE6CEDB1EBE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeRunTracker.Infrastructure.LeverageIndex", "HomeRunTracker.Infrastructure.LeverageIndex\HomeRunTracker.Infrastructure.LeverageIndex.csproj", "{7C375240-97B4-4409-BD45-B17FECDE9589}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeRunTracker.Infrastructure.MlbApiService", "HomeRunTracker.Infrastructure.MlbApiService\HomeRunTracker.Infrastructure.MlbApiService.csproj", "{A16EE934-E7EB-4B9F-BE9B-73BE11BF2FB0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeRunTracker.SharedKernel", "HomeRunTracker.SharedKernel\HomeRunTracker.SharedKernel.csproj", "{5E007549-1C4E-4549-8D7F-197114271CB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeRunTracker.Infrastructure.PitcherGameScore", "HomeRunTracker.Infrastructure.PitcherGameScore\HomeRunTracker.Infrastructure.PitcherGameScore.csproj", "{C16F6A4D-4C88-4F62-860B-A00BBFD610E0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,13 +24,29 @@ Global
 		{3367DA14-BA7B-4B2B-9798-ADB3707055F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3367DA14-BA7B-4B2B-9798-ADB3707055F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3367DA14-BA7B-4B2B-9798-ADB3707055F2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3BA66BA8-45A8-43BE-813C-687EA6A2897A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3BA66BA8-45A8-43BE-813C-687EA6A2897A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3BA66BA8-45A8-43BE-813C-687EA6A2897A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3BA66BA8-45A8-43BE-813C-687EA6A2897A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CCCE0210-A5D6-4134-98F5-B2D313DAF1FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CCCE0210-A5D6-4134-98F5-B2D313DAF1FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CCCE0210-A5D6-4134-98F5-B2D313DAF1FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CCCE0210-A5D6-4134-98F5-B2D313DAF1FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{870CCAB3-A713-43F1-86D8-BE6CEDB1EBE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{870CCAB3-A713-43F1-86D8-BE6CEDB1EBE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{870CCAB3-A713-43F1-86D8-BE6CEDB1EBE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{870CCAB3-A713-43F1-86D8-BE6CEDB1EBE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C375240-97B4-4409-BD45-B17FECDE9589}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C375240-97B4-4409-BD45-B17FECDE9589}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C375240-97B4-4409-BD45-B17FECDE9589}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C375240-97B4-4409-BD45-B17FECDE9589}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A16EE934-E7EB-4B9F-BE9B-73BE11BF2FB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A16EE934-E7EB-4B9F-BE9B-73BE11BF2FB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A16EE934-E7EB-4B9F-BE9B-73BE11BF2FB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A16EE934-E7EB-4B9F-BE9B-73BE11BF2FB0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E007549-1C4E-4549-8D7F-197114271CB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E007549-1C4E-4549-8D7F-197114271CB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E007549-1C4E-4549-8D7F-197114271CB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E007549-1C4E-4549-8D7F-197114271CB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C16F6A4D-4C88-4F62-860B-A00BBFD610E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C16F6A4D-4C88-4F62-860B-A00BBFD610E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C16F6A4D-4C88-4F62-860B-A00BBFD610E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C16F6A4D-4C88-4F62-860B-A00BBFD610E0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

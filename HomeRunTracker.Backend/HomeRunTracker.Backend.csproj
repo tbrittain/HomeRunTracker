@@ -26,18 +26,18 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\HomeRunTracker.Common\HomeRunTracker.Common.csproj" />
+      <ProjectReference Include="..\HomeRunTracker.Core\HomeRunTracker.Core.csproj" />
+      <ProjectReference Include="..\HomeRunTracker.Infrastructure.LeverageIndex\HomeRunTracker.Infrastructure.LeverageIndex.csproj" />
+      <ProjectReference Include="..\HomeRunTracker.Infrastructure.MlbApiService\HomeRunTracker.Infrastructure.MlbApiService.csproj" />
+      <ProjectReference Include="..\HomeRunTracker.Infrastructure.PitcherGameScore\HomeRunTracker.Infrastructure.PitcherGameScore.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Resources\" />
+      <Folder Include="Models\" />
     </ItemGroup>
 
     <ItemGroup>
       <None Remove="Resources\leverage_indices.csv" />
-      <EmbeddedResource Include="Resources\leverage_indices.csv">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </EmbeddedResource>
     </ItemGroup>
 
 </Project>

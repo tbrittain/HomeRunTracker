@@ -1,24 +1,22 @@
 ﻿using HomeRunTracker.Backend.Grains;
-using HomeRunTracker.Backend.Services.HttpService;
-using HomeRunTracker.Common.Models.Details;
-using HomeRunTracker.Common.Models.Summary;
+using HomeRunTracker.Core.Interfaces;
 
 namespace HomeRunTracker.Backend.Services;
 
 public class MlbCurrentDayGamePollingService : BackgroundService
 {
+    private readonly IMlbApiService _mlbApiService;
     private readonly IGrainFactory _grainFactory;
-    private readonly IHttpService _httpService;
     private readonly ILogger<MlbCurrentDayGamePollingService> _logger;
     private readonly TimeSpan _pollingInterval = TimeSpan.FromHours(4);
     private readonly List<int> _trackedCurrentDayGameIds = new(15);
 
     public MlbCurrentDayGamePollingService(IGrainFactory grainFactory, ILogger<MlbCurrentDayGamePollingService> logger,
-        IHttpService httpService)
+        IMlbApiService mlbApiService)
     {
         _grainFactory = grainFactory;
         _logger = logger;
-        _httpService = httpService;
+        _mlbApiService = mlbApiService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -26,7 +24,7 @@ public class MlbCurrentDayGamePollingService : BackgroundService
         _logger.LogInformation("Starting MLB API polling service");
         while (!stoppingToken.IsCancellationRequested)
         {
-            var fetchGamesResponse = await _httpService.FetchGames(DateTime.Now);
+            var fetchGamesResponse = await _mlbApiService.FetchGames(DateTime.Now);
 
             if (fetchGamesResponse.TryPickT2(out var error, out var rest))
             {
@@ -38,6 +36,8 @@ public class MlbCurrentDayGamePollingService : BackgroundService
                 _logger.LogError("Failed to fetch games from MLB API; status code: {StatusCode}",
                     failureStatusCode.ToString());
             }
+            
+            // TODO: MAY NEED TO MAP SCHEDULE TO A NEW MODEL THAT HAS GenerateSerializerAttribute
 
             if (schedule.TotalGames == 0)
             {
@@ -46,7 +46,7 @@ public class MlbCurrentDayGamePollingService : BackgroundService
                 continue;
             }
 
-            var games = schedule.Dates[0].Games
+            var games = schedule.Games
                 .Where(g => !_trackedCurrentDayGameIds.Contains(g.Id))
                 .ToList();
 

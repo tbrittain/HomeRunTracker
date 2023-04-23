@@ -1,5 +1,5 @@
 ﻿using HomeRunTracker.Backend.Services;
-using HomeRunTracker.Common.Models.Notifications;
+using HomeRunTracker.Core.Actions.Games.Notifications;
 using MediatR;
 
 namespace HomeRunTracker.Backend.Handlers;

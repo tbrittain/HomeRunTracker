@@ -1,11 +1,16 @@
 using System.Net;
 using System.Reflection;
-using HomeRunTracker.Backend.Grains;
-using HomeRunTracker.Backend.Handlers;
+using HomeRunTracker.Backend.Actions.Game.Handlers;
+using HomeRunTracker.Backend.Actions.Game.Notifications;
+using HomeRunTracker.Backend.Actions.GameScore.Handlers;
+using HomeRunTracker.Backend.Actions.GameScore.Notifications;
+using HomeRunTracker.Backend.Actions.ScoringPlay.Handlers;
+using HomeRunTracker.Backend.Actions.ScoringPlay.Notifications;
 using HomeRunTracker.Backend.Hubs;
 using HomeRunTracker.Backend.Services;
-using HomeRunTracker.Backend.Services.HttpService;
-using HomeRunTracker.Common.Models.Notifications;
+using HomeRunTracker.Infrastructure.LeverageIndex;
+using HomeRunTracker.Infrastructure.MlbApiService;
+using HomeRunTracker.Infrastructure.PitcherGameScore;
 using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,39 +45,27 @@ builder.WebHost.UseKestrel((ctx, kestrelOptions) =>
     kestrelOptions.ListenLocalhost(5001 + instanceId);
 });
 
-builder.Services.AddHttpClient();
-builder.Services.AddSignalR();
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
-builder.Services.AddScoped<INotificationHandler<GameStoppedNotification>, GameRemovedHandler>();
-builder.Services.AddScoped<INotificationHandler<ScoringPlayNotification>, HomeRunHandler>();
-builder.Services.AddScoped<INotificationHandler<ScoringPlayUpdatedNotification>, ScoringPlayUpdatedHandler>();
-builder.Services.AddScoped<INotificationHandler<GameScoreNotification>, GameScoreHandler>();
+builder.Services.AddMediatR(cfg => 
+        cfg.RegisterServicesFromAssembly(Assembly.GetCallingAssembly()))
+    .AddMlbApiService()
+    .AddLeverageIndexService()
+    .AddPitcherGameScoreService()
+    .AddScoped<INotificationHandler<GameStoppedNotification>, GameStoppedHandler>()
+    .AddScoped<INotificationHandler<ScoringPlayNotification>, HomeRunHandler>()
+    .AddScoped<INotificationHandler<ScoringPlayUpdatedNotification>, ScoringPlayUpdatedHandler>()
+    .AddScoped<INotificationHandler<GameScoreNotification>, GameScoreHandler>()
+    .AddSingleton<MlbCurrentDayGamePollingService>()
+    .AddHostedService<MlbCurrentDayGamePollingService>(p =>
+        p.GetRequiredService<MlbCurrentDayGamePollingService>())
+    .AddSignalR();
 
-builder.Services.AddSingleton<IHttpService, HttpService>();
-builder.Services.AddSingleton<MlbCurrentDayGamePollingService>();
-builder.Services.AddSingleton<LeverageIndexService>();
-builder.Services.AddSingleton<PitcherGameScoreService>();
-builder.Services.AddHostedService<MlbCurrentDayGamePollingService>(p =>
-    p.GetRequiredService<MlbCurrentDayGamePollingService>());
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
 app.MapHub<ScoringPlayHub>("scoring-play-hub");
-
-app.MapGet("api/scoring-plays", async (IClusterClient client, DateTime? date) =>
-{
-    var grain = client.GetGrain<IGameListGrain>(0);
-    var scoringPlays = await grain.GetScoringPlays(date ?? DateTime.Now);
-    return Results.Ok(scoringPlays);
-});
-
-app.MapGet("api/game-scores", async (IClusterClient client, DateTime? date) =>
-{
-    var grain = client.GetGrain<IGameListGrain>(0);
-    var gameScores = await grain.GetGameScores(date ?? DateTime.Now);
-    return Results.Ok(gameScores);
-});
+app.MapControllers();
 
 if (app.Environment.IsDevelopment())
 {

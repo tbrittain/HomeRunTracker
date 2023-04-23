@@ -1,11 +1,11 @@
-﻿using HomeRunTracker.Common.Models.Details;
-using HomeRunTracker.Common.Models.Internal;
+﻿using HomeRunTracker.Backend.Models;
+using HomeRunTracker.Backend.Models.Details;
 
 namespace HomeRunTracker.Backend.Grains;
 
 public interface IGameGrain : IGrainWithIntegerKey
 {
-    Task<MlbGameDetails> GetGame();
+    Task<GameDetails> GetGame();
     Task Stop();
     Task<List<ScoringPlayRecord>> GetScoringPlays();
     Task<List<GameScoreRecord>> GetGameScores();

@@ -8,10 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Mapster" Version="7.3.0" />
         <PackageReference Include="MediatR" Version="12.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.5" />
         <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
-        <PackageReference Include="Microsoft.Data.Analysis" Version="0.20.1" />
         <PackageReference Include="Microsoft.Orleans.Core" Version="7.1.1" />
         <PackageReference Include="Microsoft.Orleans.OrleansProviders" Version="3.7.0" />
         <PackageReference Include="Microsoft.Orleans.Server" Version="7.1.1" />
@@ -26,18 +26,14 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\HomeRunTracker.Common\HomeRunTracker.Common.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Resources\" />
+      <ProjectReference Include="..\HomeRunTracker.Core\HomeRunTracker.Core.csproj" />
+      <ProjectReference Include="..\HomeRunTracker.Infrastructure.LeverageIndex\HomeRunTracker.Infrastructure.LeverageIndex.csproj" />
+      <ProjectReference Include="..\HomeRunTracker.Infrastructure.MlbApiService\HomeRunTracker.Infrastructure.MlbApiService.csproj" />
+      <ProjectReference Include="..\HomeRunTracker.Infrastructure.PitcherGameScore\HomeRunTracker.Infrastructure.PitcherGameScore.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <None Remove="Resources\leverage_indices.csv" />
-      <EmbeddedResource Include="Resources\leverage_indices.csv">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </EmbeddedResource>
     </ItemGroup>
 
 </Project>

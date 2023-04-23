@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\HomeRunTracker.Common\HomeRunTracker.Common.csproj" />
+      <ProjectReference Include="..\HomeRunTracker.Backend\HomeRunTracker.Backend.csproj" />
     </ItemGroup>
 
 </Project>

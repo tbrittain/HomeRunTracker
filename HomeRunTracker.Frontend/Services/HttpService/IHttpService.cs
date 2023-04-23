@@ -1,4 +1,4 @@
-﻿using HomeRunTracker.Common.Models.Internal;
+﻿using HomeRunTracker.Backend.Models;
 
 namespace HomeRunTracker.Frontend.Services.HttpService;
 

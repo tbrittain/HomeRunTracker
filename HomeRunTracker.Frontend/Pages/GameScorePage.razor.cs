@@ -1,4 +1,4 @@
-﻿using HomeRunTracker.Common.Models.Notifications;
+﻿using HomeRunTracker.Backend.Actions.GameScore.Notifications;
 using HomeRunTracker.Frontend.Models;
 using Mapster;
 using Microsoft.AspNetCore.Components;

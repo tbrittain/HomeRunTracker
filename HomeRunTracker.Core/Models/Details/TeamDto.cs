@@ -1,6 +1,6 @@
 ﻿namespace HomeRunTracker.Core.Models.Details;
 
-public class TeamDto
+public record TeamDto
 {
     public int Id { get; set; }
     

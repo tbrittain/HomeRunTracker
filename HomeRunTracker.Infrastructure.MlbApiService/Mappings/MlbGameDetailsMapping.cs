@@ -23,13 +23,7 @@ public static class MlbGameDetailsMapping
                 Name = mlbGameDetails.GameData.TeamMatchup.AwayTeam.Name
             },
             Plays = mlbGameDetails.LiveData.Plays.AllPlays
-                .Where(mlbPlay =>
-                {
-                    var playEvent = mlbPlay.Events.FirstOrDefault(playEvent => playEvent.HitData is not null) ??
-                                    mlbPlay.Events.LastOrDefault();
-                    
-                    return playEvent is not null;
-                })
+                .Where(mlbPlay => mlbPlay.Events.Any())
                 .Select(mlbPlay =>
                 {
                     var (homeScoreStart, awayScoreStart) = mlbPlay.GetScoreStart();

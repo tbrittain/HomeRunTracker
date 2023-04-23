@@ -5,6 +5,6 @@ public enum EMlbGameStatus
     Unknown,
     PreGame,
     Warmup,
-    Final,
     InProgress,
+    Final,
 }

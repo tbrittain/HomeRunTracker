@@ -6,7 +6,7 @@ namespace HomeRunTracker.Backend.Models.Details;
 public class Play
 {
     [Id(0)]
-    public Guid Id { get; set; }
+    public Guid? Id { get; set; }
 
     [Id(1)]
     public string Description { get; set; } = string.Empty;

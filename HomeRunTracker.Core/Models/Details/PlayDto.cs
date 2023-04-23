@@ -4,7 +4,7 @@ namespace HomeRunTracker.Core.Models.Details;
 
 public class PlayDto
 {
-    public Guid Id { get; set; }
+    public Guid? Id { get; set; }
 
     public string Description { get; set; } = string.Empty;
 

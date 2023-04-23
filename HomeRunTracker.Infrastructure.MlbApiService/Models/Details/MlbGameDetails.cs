@@ -7,6 +7,7 @@ public class MlbGameDetails
     [JsonPropertyName("gamePk")]
     public int Id { get; set; }
     
+    [JsonPropertyName("liveData")]
     public MlbGameLiveData LiveData { get; set; } = new();
     
     [JsonPropertyName("gameData")]

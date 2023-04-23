@@ -16,11 +16,10 @@ public class GameScoreController : ControllerBase
     }
 
     [HttpGet]
-    [Route("GameScores")]
     public async Task<ActionResult<List<GameScoreRecord>>> GetGameScores([FromQuery] DateTime? date)
     {
         var grain = _clusterClient.GetGrain<IGameListGrain>(0);
-        var scoringPlays = await grain.GetScoringPlays(date ?? DateTime.Now);
-        return Ok(scoringPlays);
+        var gameScores = await grain.GetGameScores(date ?? DateTime.Now);
+        return Ok(gameScores);
     }
 }

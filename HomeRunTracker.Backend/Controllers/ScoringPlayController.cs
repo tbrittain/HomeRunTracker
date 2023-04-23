@@ -14,13 +14,12 @@ public class ScoringPlayController : ControllerBase
     {
         _clusterClient = clusterClient;
     }
-
+    
     [HttpGet]
-    [Route("ScoringPlays")]
     public async Task<ActionResult<List<ScoringPlayRecord>>> GetScoringPlays([FromQuery] DateTime? date)
     {
         var grain = _clusterClient.GetGrain<IGameListGrain>(0);
-        var gameScores = await grain.GetGameScores(date ?? DateTime.Now);
-        return Ok(gameScores);
+        var scoringPlays = await grain.GetScoringPlays(date ?? DateTime.Now);
+        return Ok(scoringPlays);
     }
 }

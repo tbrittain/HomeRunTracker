@@ -6,7 +6,7 @@ public class RunnerDto
 {
     public EBase Base { get; set; }
     
-    public PlayerDto ResponsiblePitcher { get; set; } = new();
+    public PlayerDto? ResponsiblePitcher { get; set; } = new();
     
     public bool IsScoringEvent { get; set; }
     

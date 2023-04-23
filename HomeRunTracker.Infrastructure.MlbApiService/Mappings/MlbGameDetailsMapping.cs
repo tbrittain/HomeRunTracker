@@ -23,6 +23,13 @@ public static class MlbGameDetailsMapping
                 Name = mlbGameDetails.GameData.TeamMatchup.AwayTeam.Name
             },
             Plays = mlbGameDetails.LiveData.Plays.AllPlays
+                .Where(mlbPlay =>
+                {
+                    var playEvent = mlbPlay.Events.FirstOrDefault(playEvent => playEvent.HitData is not null) ??
+                                    mlbPlay.Events.LastOrDefault();
+                    
+                    return playEvent is not null;
+                })
                 .Select(mlbPlay =>
                 {
                     var (homeScoreStart, awayScoreStart) = mlbPlay.GetScoreStart();
@@ -73,11 +80,13 @@ public static class MlbGameDetailsMapping
                                 Base = mlbPlayRunner.Movement.Base,
                                 IsScoringEvent = mlbPlayRunner.Details.IsScoringEvent,
                                 IsEarned = mlbPlayRunner.Details.Earned,
-                                ResponsiblePitcher = new PlayerDto
-                                {
-                                    Id = mlbPlayRunner.Details.Pitcher.Id,
-                                    FullName = mlbPlayRunner.Details.Pitcher.FullName
-                                }
+                                ResponsiblePitcher = mlbPlayRunner.Details.Pitcher is null
+                                    ? null
+                                    : new PlayerDto
+                                    {
+                                        Id = mlbPlayRunner.Details.Pitcher.Id,
+                                        FullName = mlbPlayRunner.Details.Pitcher.FullName
+                                    }
                             })
                             .ToList(),
                         HitData = hitDataDto,

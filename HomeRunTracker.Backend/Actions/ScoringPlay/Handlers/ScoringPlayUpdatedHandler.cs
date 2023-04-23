@@ -1,8 +1,8 @@
-﻿using HomeRunTracker.Backend.Grains;
-using HomeRunTracker.Backend.Models.Notifications;
+﻿using HomeRunTracker.Backend.Actions.ScoringPlay.Notifications;
+using HomeRunTracker.Backend.Grains;
 using MediatR;
 
-namespace HomeRunTracker.Backend.Handlers;
+namespace HomeRunTracker.Backend.Actions.ScoringPlay.Handlers;
 
 public class ScoringPlayUpdatedHandler : INotificationHandler<ScoringPlayUpdatedNotification>
 {

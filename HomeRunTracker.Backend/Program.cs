@@ -1,8 +1,12 @@
 using System.Net;
 using System.Reflection;
-using HomeRunTracker.Backend.Handlers;
+using HomeRunTracker.Backend.Actions.Game.Handlers;
+using HomeRunTracker.Backend.Actions.Game.Notifications;
+using HomeRunTracker.Backend.Actions.GameScore.Handlers;
+using HomeRunTracker.Backend.Actions.GameScore.Notifications;
+using HomeRunTracker.Backend.Actions.ScoringPlay.Handlers;
+using HomeRunTracker.Backend.Actions.ScoringPlay.Notifications;
 using HomeRunTracker.Backend.Hubs;
-using HomeRunTracker.Backend.Models.Notifications;
 using HomeRunTracker.Backend.Services;
 using HomeRunTracker.Infrastructure.LeverageIndex;
 using HomeRunTracker.Infrastructure.MlbApiService;
@@ -47,7 +51,7 @@ builder.Services.AddMediatR(cfg =>
     .AddMlbApiService()
     .AddLeverageIndexService()
     .AddPitcherGameScoreService()
-    .AddScoped<INotificationHandler<GameStoppedNotification>, GameRemovedHandler>()
+    .AddScoped<INotificationHandler<GameStoppedNotification>, GameStoppedHandler>()
     .AddScoped<INotificationHandler<ScoringPlayNotification>, HomeRunHandler>()
     .AddScoped<INotificationHandler<ScoringPlayUpdatedNotification>, ScoringPlayUpdatedHandler>()
     .AddScoped<INotificationHandler<GameScoreNotification>, GameScoreHandler>()

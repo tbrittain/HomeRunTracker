@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace HomeRunTracker.Backend.Models.Notifications;
+namespace HomeRunTracker.Backend.Actions.ScoringPlay.Notifications;
 
 [GenerateSerializer]
 public class ScoringPlayUpdatedNotification : INotification

@@ -1,6 +1,7 @@
-﻿using HomeRunTracker.Backend.Hubs;
+﻿using HomeRunTracker.Backend.Actions.GameScore.Notifications;
+using HomeRunTracker.Backend.Actions.ScoringPlay.Notifications;
+using HomeRunTracker.Backend.Hubs;
 using HomeRunTracker.Backend.Models;
-using HomeRunTracker.Backend.Models.Notifications;
 using HomeRunTracker.Core.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;

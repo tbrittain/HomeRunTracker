@@ -1,6 +1,7 @@
-﻿using MediatR;
+﻿using HomeRunTracker.Backend.Models;
+using MediatR;
 
-namespace HomeRunTracker.Backend.Models.Notifications;
+namespace HomeRunTracker.Backend.Actions.GameScore.Notifications;
 
 [GenerateSerializer]
 public class GameScoreNotification : INotification

@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace HomeRunTracker.Backend.Models.Notifications;
+namespace HomeRunTracker.Backend.Actions.Game.Notifications;
 
 [GenerateSerializer]
 public class GameStoppedNotification : INotification

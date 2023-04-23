@@ -2,17 +2,9 @@
 
 HomeRunTracker is an application that tracks MLB home runs in near real-time and displays them on a dashboard. It does this via a backend service that polls the MLB API and notifies connected clients (the dashboard) via a SignalR connection.
 
-## Project Structure
-
-The solution is split into three projects:
-
-- `HomeRunTracker.Backend`: The backend service that polls the MLB API and notifies connected clients via SignalR.
-- `HomeRunTracker.Frontend`: The dashboard that displays the home runs as they are hit.
-- `HomeRunTracker.Common`: Common code shared between the backend and frontend.
-
 ### Backend
 
-The backend service is a .NET Core API composed of some minimal APIs, a SignalR hub, an Orleans silo, and background service that polls the MLB Schedule API daily for game information. Upon new games being found, the background service spawns a new Orleans grain that is resposible for polling live updates from the game upon the game starting. The Orleans grain then notifies the SignalR hub upon new home runs or updates to existing home runs (such as the highlight video being uploaded), which in turn notifies connected clients.
+The backend service is a .NET Core API composed of some endpoints for querying scoring play/pitcher game score data, a SignalR hub, an Orleans silo, and background service that polls the MLB Schedule API daily for game information. Upon new games being found, the background service spawns a new Orleans grain that is responsible for polling live updates from the game upon the game starting. The Orleans grain then notifies the SignalR hub upon new home runs or updates to existing home runs (such as the highlight video being uploaded), which in turn notifies connected clients.
 
 ### Frontend
 

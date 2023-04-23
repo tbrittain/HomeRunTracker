@@ -13,6 +13,11 @@ public static class MlbGameContentMapping
                 .Select(highlightItem => new HighlightDto
                 {
                     Guid = highlightItem.Guid,
+                    Keywords = highlightItem.Keywords.Select(keyword => new HighlightKeywordDto
+                    {
+                        Type = keyword.Type,
+                        Value = keyword.Value
+                    }).ToList(),
                     Playbacks = highlightItem.Playbacks.Select(playback => new HighlightPlaybackDto
                     {
                         PlaybackType = playback.PlaybackType,

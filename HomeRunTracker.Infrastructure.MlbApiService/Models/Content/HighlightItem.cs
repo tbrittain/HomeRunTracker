@@ -6,7 +6,7 @@ public class HighlightItem
 {
     [JsonPropertyName("guid")]
     public string GuidString { get; set; } = string.Empty;
-    
+
     public Guid? Guid
     {
         get
@@ -20,4 +20,7 @@ public class HighlightItem
 
     [JsonPropertyName("playbacks")]
     public List<HighlightPlayback> Playbacks { get; set; } = new();
+
+    [JsonPropertyName("keywordsAll")]
+    public List<HighlightKeyword> Keywords { get; set; } = new();
 }

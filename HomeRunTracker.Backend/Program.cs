@@ -58,6 +58,8 @@ builder.Services.AddCore()
         p.GetRequiredService<MlbCurrentDayGamePollingService>())
     .AddSignalR();
 
+builder.Services.AddControllers();
+
 var app = builder.Build();
 
 app.MapHub<ScoringPlayHub>("scoring-play-hub");

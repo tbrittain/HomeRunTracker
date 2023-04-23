@@ -7,7 +7,6 @@ using HomeRunTracker.Core.Actions.ScoringPlays.Notifications;
 using HomeRunTracker.Core.Interfaces;
 using HomeRunTracker.Core.Models;
 using HomeRunTracker.Core.Models.Details;
-using HomeRunTracker.Infrastructure.MlbApiService.Models.Content;
 using HomeRunTracker.SharedKernel.Enums;
 using Mapster;
 using MediatR;

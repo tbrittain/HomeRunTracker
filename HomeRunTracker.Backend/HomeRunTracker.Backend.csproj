@@ -36,8 +36,4 @@
       <None Remove="Resources\leverage_indices.csv" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Models\Responses\" />
-    </ItemGroup>
-
 </Project>

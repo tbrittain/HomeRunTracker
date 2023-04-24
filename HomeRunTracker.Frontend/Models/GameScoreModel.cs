@@ -6,21 +6,21 @@ namespace HomeRunTracker.Frontend.Models;
 public class GameScoreModel
 {
     public int GameId { get; set; }
-    
+
     public int PitcherId { get; set; }
-    
+
     public string PitcherName { get; set; } = string.Empty;
-    
+
     public int TeamId { get; set; }
-    
+
     public string TeamName { get; set; } = string.Empty;
-    
+
     public int TeamIdAgainst { get; set; }
-    
+
     public string TeamNameAgainst { get; set; } = string.Empty;
-    
+
     public int Outs { get; set; }
-    
+
     public int FullInningsPitched { get; set; }
 
     public string FormattedInningsPitched
@@ -32,23 +32,30 @@ public class GameScoreModel
             return $"{fullInnings}.{remainder}";
         }
     }
-    
+
     public int Hits { get; set; }
-    
+
     public int Strikeouts { get; set; }
-    
+
     public int EarnedRuns { get; set; }
-    
+
     public int UnearnedRuns { get; set; }
-    
+
     public int Walks { get; set; }
-    
+
     public int GameScore { get; set; }
-    
-    public string PitcherImageUrl => $"https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_100,q_auto:best/v1/people/{PitcherId}/headshot/67/current";
-    
+
+    public string? HighlightUrl { get; set; }
+
+    public string? HighlightTitle { get; set; }
+
+    public string? HighlightDescription { get; set; }
+
+    public string PitcherImageUrl =>
+        $"https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_100,q_auto:best/v1/people/{PitcherId}/headshot/67/current";
+
     public string TeamImageUrl => $"https://midfield.mlbstatic.com/v1/team/{TeamId}/spots/72";
-    
+
     public string TeamImageUrlAgainst => $"https://midfield.mlbstatic.com/v1/team/{TeamIdAgainst}/spots/72";
 
     public string FormattedGameScore
@@ -74,7 +81,7 @@ public class GameScoreModel
             return sb.ToString();
         }
     }
-    
+
     public string GameScoreColor => GetColorForGameScore().ToString();
 
     private RgbColor GetColorForGameScore()

@@ -1,4 +1,7 @@
-﻿using HomeRunTracker.Backend.Actions.GameScore.Notifications;
+﻿using Blazored.Modal;
+using Blazored.Modal.Services;
+using HomeRunTracker.Backend.Actions.GameScore.Notifications;
+using HomeRunTracker.Frontend.Components;
 using HomeRunTracker.Frontend.Models;
 using Mapster;
 using Microsoft.AspNetCore.Components;
@@ -22,6 +25,8 @@ public partial class GameScorePage
         GridSort<GameScoreModel>.ByAscending(x => x.TeamName);
 
     [CascadingParameter] public DateTime Date { get; set; }
+    
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,6 +69,24 @@ public partial class GameScorePage
         await InvokeAsync(StateHasChanged);
 
         await base.OnParametersSetAsync();
+    }
+    
+    private void OnVideoButtonClicked(GameScoreModel model)
+    {
+        var title = model.HighlightTitle!;
+        var header = model.HighlightDescription!;
+        var videoSrc = model.HighlightUrl!;
+
+        var parameters = new ModalParameters()
+            .Add(nameof(VideoPlayer.HeaderText), header)
+            .Add(nameof(VideoPlayer.VideoSrc), videoSrc);
+        
+        var options = new ModalOptions
+        {
+            Size = ModalSize.ExtraLarge
+        };
+        
+        Modal.Show<VideoPlayer>(title, parameters, options);
     }
 
     public void Dispose()

@@ -23,4 +23,10 @@ public class HighlightItem
 
     [JsonPropertyName("keywordsAll")]
     public List<HighlightKeyword> Keywords { get; set; } = new();
+    
+    [JsonPropertyName("title")]
+    public string Title { get; set; } = string.Empty;
+    
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
 }

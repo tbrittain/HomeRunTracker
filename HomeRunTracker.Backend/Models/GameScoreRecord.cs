@@ -46,4 +46,13 @@ public class GameScoreRecord
 
     [Id(13)]
     public int GameScore { get; set; }
+
+    [Id(14)]
+    public string? HighlightUrl { get; set; }
+
+    [Id(15)]
+    public string? HighlightTitle { get; set; }
+
+    [Id(16)]
+    public string? HighlightDescription { get; set; }
 }

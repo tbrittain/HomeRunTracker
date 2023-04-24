@@ -13,6 +13,8 @@ public static class MlbGameContentMapping
                 .Select(highlightItem => new HighlightDto
                 {
                     Guid = highlightItem.Guid,
+                    Title = highlightItem.Title,
+                    Description = highlightItem.Description,
                     Keywords = highlightItem.Keywords.Select(keyword => new HighlightKeywordDto
                     {
                         Type = keyword.Type,

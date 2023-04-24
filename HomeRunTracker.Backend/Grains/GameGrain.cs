@@ -6,6 +6,7 @@ using HomeRunTracker.Backend.Models.Content;
 using HomeRunTracker.Backend.Models.Details;
 using HomeRunTracker.Core.Interfaces;
 using HomeRunTracker.Core.Models;
+using HomeRunTracker.Core.Models.Content;
 using HomeRunTracker.Core.Models.Details;
 using HomeRunTracker.SharedKernel.Enums;
 using Mapster;
@@ -153,6 +154,7 @@ public class GameGrain : Grain, IGameGrain
         var gameScoreDtos = _pitcherGameScoreService.GetPitcherGameScores(GameDetails.Adapt<GameDetailsDto>());
         var gameScores = gameScoreDtos
             .Select(x => x.Adapt<GameScoreRecord>())
+            .Select(SetPitcherHighlightVideo)
             .ToList();
 
         foreach (var gameScore in gameScores)
@@ -174,6 +176,55 @@ public class GameGrain : Grain, IGameGrain
             if (!IsInitialLoad)
                 await _mediator.Publish(new GameScoreNotification(GameId, GameDetails.GameStartTime, gameScore));
         }
+    }
+
+    private GameScoreRecord SetPitcherHighlightVideo(GameScoreRecord x)
+    {
+        if (!GameContent.Highlights.Any()) return x;
+
+        var startingPitcherHighlight = GameContent.Highlights
+            .Where(h => h.Keywords
+                .Any(kw => kw.Type == HighlightKeywordDto.PlayerIdType && int.Parse(kw.Value) == x.PitcherId))
+            .FirstOrDefault(h => h.Keywords
+                .Any(kw => kw is
+                {
+                    Type: HighlightKeywordDto.TaxonomyType,
+                    Value: HighlightKeywordDto.StartingPitcherHighlightValue
+                }));
+
+        if (startingPitcherHighlight is not null)
+        {
+            x.HighlightUrl = startingPitcherHighlight.Playbacks
+                .FirstOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
+                ?.Url;
+            x.HighlightTitle = startingPitcherHighlight.Title;
+            x.HighlightDescription = startingPitcherHighlight.Description;
+
+            return x;
+        }
+
+        var generalPitcherHighlight = GameContent.Highlights
+            .Where(h => h.Keywords
+                .Any(kw =>
+                    kw.Type == HighlightKeywordDto.PlayerIdType && int.Parse(kw.Value) == x.PitcherId)
+            )
+            .FirstOrDefault(h => h.Keywords
+                .Any(kw => kw is
+                {
+                    Type: HighlightKeywordDto.TaxonomyType,
+                    Value: HighlightKeywordDto.GeneralHighlightValue
+                }));
+
+        if (generalPitcherHighlight is not null)
+        {
+            x.HighlightUrl = generalPitcherHighlight.Playbacks
+                .FirstOrDefault(p => p.PlaybackType is EPlaybackType.Mp4)
+                ?.Url;
+            x.HighlightTitle = generalPitcherHighlight.Title;
+            x.HighlightDescription = generalPitcherHighlight.Description;
+        }
+
+        return x;
     }
 
     private async Task ValidateScoringPlay(Play play)

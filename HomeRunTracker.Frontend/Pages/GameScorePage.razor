@@ -38,6 +38,7 @@
                 <p style="color: @context.GameScoreColor">@context.FormattedGameScore</p>
             </div>
         </TemplateColumn>
+        <PropertyColumn Title="Description" Sortable="true" Property="@(c => c.HighlightTitle)"/>
         <TemplateColumn
             Title="IP"
             Sortable="true"
@@ -54,5 +55,15 @@
         <PropertyColumn Title="ER" Property="@(c => c.EarnedRuns)" Sortable="true"/>
         <PropertyColumn Title="UER" Property="@(c => c.UnearnedRuns)" Sortable="true"/>
         <PropertyColumn Title="Walks" Property="@(c => c.Walks)" Sortable="true"/>
+        <TemplateColumn>
+            <td>
+                @if (!string.IsNullOrEmpty(@context.HighlightUrl))
+                {
+                    <button @onclick="(() => OnVideoButtonClicked(context))">
+                        <i class="fas fa-play"></i>
+                    </button>
+                }
+            </td>
+        </TemplateColumn>
     </QuickGrid>
 </div>

@@ -14,7 +14,7 @@
         <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
         <PackageReference Include="Microsoft.Orleans.Core" Version="7.1.2" />
         <PackageReference Include="Microsoft.Orleans.OrleansProviders" Version="3.7.0" />
-        <PackageReference Include="Microsoft.Orleans.Server" Version="7.1.1" />
+        <PackageReference Include="Microsoft.Orleans.Server" Version="7.1.2" />
         <PackageReference Include="OneOf" Version="3.0.243" />
         <PackageReference Include="OrleansDashboard" Version="7.2.0" />
     </ItemGroup>

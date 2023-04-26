@@ -17,6 +17,7 @@
         <PackageReference Include="Microsoft.Orleans.Server" Version="7.1.2" />
         <PackageReference Include="OneOf" Version="3.0.243" />
         <PackageReference Include="OrleansDashboard" Version="7.2.0" />
+        <PackageReference Include="Serilog.AspNetCore" Version="6.1.0" />
     </ItemGroup>
 
     <ItemGroup>

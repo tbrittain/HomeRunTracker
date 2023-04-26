@@ -8,10 +8,12 @@ using HomeRunTracker.Backend.Actions.ScoringPlay.Handlers;
 using HomeRunTracker.Backend.Actions.ScoringPlay.Notifications;
 using HomeRunTracker.Backend.Hubs;
 using HomeRunTracker.Backend.Services;
+using HomeRunTracker.Backend.Utils;
 using HomeRunTracker.Infrastructure.LeverageIndex;
 using HomeRunTracker.Infrastructure.MlbApiService;
 using HomeRunTracker.Infrastructure.PitcherGameScore;
 using MediatR;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,8 +47,9 @@ builder.WebHost.UseKestrel((ctx, kestrelOptions) =>
     kestrelOptions.ListenLocalhost(5001 + instanceId);
 });
 
+builder.Host.UseSerilog();
 
-builder.Services.AddMediatR(cfg => 
+builder.Services.AddMediatR(cfg =>
         cfg.RegisterServicesFromAssembly(Assembly.GetCallingAssembly()))
     .AddMlbApiService()
     .AddLeverageIndexService()
@@ -63,6 +66,11 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .Enrich.With(new GrainLoggingOptions(app.Services))
+    .CreateLogger();
 
 app.MapHub<ScoringPlayHub>("scoring-play-hub");
 app.MapControllers();

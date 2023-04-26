@@ -28,10 +28,12 @@ public class PitcherGameScoreService : IPitcherGameScoreService
                 .Sum(x => x.Result is EPlayResult.Strikeout ? 1 : 0);
             var earnedRuns = plays
                 .Select(x => x.Runners
-                    .Sum(y => y is {IsScoringEvent: true, IsEarned: true} ? 1 : 0)).Sum();
+                    .Sum(y => y is {IsScoringEvent: true, IsEarned: true} ? 1 : 0))
+                .Sum();
             var unearnedRuns = plays
                 .Select(x => x.Runners
-                    .Sum(y => y is {IsScoringEvent: true, IsEarned: false} ? 1 : 0)).Sum();
+                    .Sum(y => y is {IsScoringEvent: true, IsEarned: false} ? 1 : 0))
+                .Sum();
             var walks = plays
                 .Sum(x => x.Result is EPlayResult.Walk ? 1 : 0);
             
